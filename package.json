@@ -4,7 +4,7 @@
     "description": "MVP for racing simulator",
     "main": "index.js",
     "repository": "https://github.com/lionbur/racing-feet",
-    "author": "‪Lion Burger‬‏ <lionbur@gmail.com>",
+    "author": "Lion Burger <lionbur@gmail.com>",
     "license": "MIT",
     "private": true
 }
