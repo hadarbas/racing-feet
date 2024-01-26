@@ -11,4 +11,12 @@
       "modules": false
     }]
   ],
+  "plugins": [
+    ["module-resolver", {
+      "root": ["./src"],
+      "alias": {
+        "@assets": "./src/assets"
+      }
+    }]
+  ]  
 }

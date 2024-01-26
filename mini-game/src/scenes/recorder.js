@@ -1,324 +1,172 @@
-import Phaser from 'phaser';
+import PedalsScene from './pedals';
+import {setDocument} from '../services/firebase/db';
 
-export default class RecorderScene extends Phaser.Scene {
-  gamepadId = null
-  pad = null
-  blueButtonIndex = null
-  redButtonIndex = null
-  greenButtonIndex = null
-  blueButtonMax = 0
-  redButtonMax = 0
-  greenButtonMax = 0
-  blueMaxIndicator = null
-  redMaxIndicator = null
-  greenMaxIndicator = null
-  blueIndicator = null
-  redIndicator = null
-  greenIndicator = null
+export default class RecorderScene extends PedalsScene {
+  step = 1;
+  recording = [
+    {time: 0, green: 0, red: 0, blue: 0},
+    {time: 2.9, green: 0, red: 0, blue: 0}
+  ];
+  timeStart = null;
+  leadTime = 3;
+  maxTime = this.leadTime + 10;
+  graphics;
 
-  prompt = null
-  step = 1
-
-  constructor () {
-    super();
+  constructor() {
+    super({key: 'record-a-new-exercise'});
   }
 
-  preload() {
-    /*      
-    //  This is an example of a bundled image:
-    this.load.image('logo', logoImg);
-
-    //  This is an example of loading a static image from the public folder:
-    this.load.image('background', 'assets/bg.jpg');
-    */
-    this.load.plugin(
-      'rexbbcodetextplugin',
-      'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexbbcodetextplugin.min.js',
-      true
-    );
-  }
-      
   create() {
-    this.prompt = this.add.rexBBCodeText(
-      400, 400,
-      '', {
-        fontSize: 24,
-        fill: '#ffffff',
-        backgroundColor: '#000040',
-        padding: 20,
-        align: 'center',
-      })
-      .setOrigin(0.5);
-
-    const xBlue = 100;
-    const xRed = 500;
-    const xGreen = 700;
-
-    this.blueMaxIndicator = this.add.ellipse(xBlue, 200, 100, 100)
-      .setStrokeStyle(3, 0x0000ff)
-      .setScale(0);
-    this.redMaxIndicator = this.add.ellipse(xRed, 200, 100, 100)
-      .setStrokeStyle(3, 0xff0000)
-      .setScale(0);
-    this.greenMaxIndicator = this.add.ellipse(xGreen, 200, 100, 100)
-      .setStrokeStyle(3, 0x00ff00)
-      .setScale(0);
-    this.blueIndicator = this.add.ellipse(xBlue, 200, 100, 100, 0x000080)
-      .setScale(0);
-    this.redIndicator = this.add.ellipse(xRed, 200, 100, 100, 0x800000)
-      .setScale(0);
-    this.greenIndicator = this.add.ellipse(xGreen, 200, 100, 100, 0x008000)
-      .setScale(0);
+    super.create();
+    this.graphics = this.add.graphics();
   }
 
-  updatePrompt() {
+  update() {
+    super.update();
+
     switch (this.step) {
-      case 1:
-      case 4: 
-      case 7:
-      case 9:
-      case 11:
-      case 13:
-      case 16: {
+      case 1: {
+
+        this.setPrompt('Press release [b]all pedals[/b]');
+
+        const {green, red, blue} = this.getPedals();
+        if (!green && !red && !blue) {
+          this.step = 2;
+        }
+        break;
+      }
+      case 2: {
+        this.setPrompt('Press [b][color=red]brake[/color][/b] to start');
+
+        const {red} = this.getPedals();
+        if (!red) {
+          break;
+        }
+        this.timeStart = Date.now() - this.leadTime * 1000;
+        this.step = 3;
+      }
+
+      case 3: {
+        const time = (Date.now() - this.timeStart) / 1000;
+
+        if (time >= this.maxTime) {
+          this.step = 4;
+          console.debug('recoding', this.recording);
+          break;
+        }
+
+        this.setPrompt(`[b]${(time - this.leadTime).toFixed(2)}[/b] seconds`);
+
+        const pedals = this.getPedals();
+        this.recording.push({
+          time,
+          ...pedals,
+        });
+
+        if (pedals.green >= 1) {
+          this.step = 4;
+        }
+
+        break;
+      }
+
+      case 4: {
+        this.setPrompt('[i]Saving ...[/i]');
+        this.save();
+        this.step = 5;
+        break;
+      }
+
+      case 5: {
+        // wait for async save to step up
+        break;
+      }
+
+      case 6: {
+        const {time} = this.recording[this.recording.length-1];
+        this.setPrompt(`Done ([b]${(time - this.leadTime).toFixed(2)}[/b] seconds)\nPress [b]any pedal[/b] for main menu`);
+
+        const {green, red, blue} = this.getPedals();
+        if (green || red || blue) {
+          this.step = 7;
+        }
+    
+        break;
+      }
+
+      case 7: {
         this.setPrompt('Please [b]release all[/b] pedals');
 
         const {blue, red, green} = this.getPedals();
         if (!blue && !green && !red) {
-          this.step += 1;
+          this.step = 8;
         }
         break;
       }
-
-      case 2:
-        this.setPrompt('Please [b]press GREEN[/b] pedal');
-      
-        this.greenButtonIndex = this.getAxisOrButtonIndex();
-        if (this.greenButtonIndex) {
-          this.step = 3;
-        }
-        break;
-
-      case 3: {
-        this.setPrompt('Please [b]release GREEN[/b] pedal');
-
-        const {green} = this.getPedals();
-        if (!green) {
-          this.step = 4; // release all
-        }
-        break;
-      }
-
-      case 5:
-        this.setPrompt('Please [b]press RED[/b] pedal');
-
-        this.redButtonIndex = this.getAxisOrButtonIndex();
-        if (this.redButtonIndex) {
-          this.step = 7;
-        }
-        break;
-
-      case 6: {
-        this.setPrompt('Please [b]release RED[/b] pedal');
-  
-          const {red} = this.getPedals();
-          if (!red) {
-            this.step = 7; // release all
-          }
-          break;
-        }
 
       case 8: {
-        this.setPrompt('Please press both [b]GREEN and RED[/b] pedals');
-
-        const {red, green} = this.getPedals();
-        if (red && green) {
-          this.step = 9; // release all
-        }
+        const mainMenu = this.scene.get('main-menu');
+        mainMenu.scene.restart();
+        this.scene.start('main-menu');
         break;
-      }
-
-      case 10: {
-        this
-          .setPrompt('Please press [b]GREEN[/b] pedal to the [b]END[/b]' +
-            (this.greenButtonMax > 0.5 ? ', then release' : ''));
-
-        const {green} = this.getPedals();
-        if (!green && this.greenButtonMax) {
-          this.step = 11; // release all
-        } else if (green) {
-          this.greenButtonMax = Math.max(green, this.greenButtonMax);
-          this.greenMaxIndicator
-            .setScale(this.greenButtonMax);
-        }
-        break;
-      }
-
-      case 12: {
-        this
-          .setPrompt('Please press [b]RED[/b] pedal to the [b]END[/b]' +
-            (this.redButtonMax > 0.5 ? ', then release' : ''));
-
-        const {red} = this.getPedals();
-        if (!red && this.redButtonMax) {
-          this.step = 13; // release all
-        } else if (red) {
-          this.redButtonMax = Math.max(red, this.redButtonMax);
-          this.redMaxIndicator
-            .setScale(this.redButtonMax);
-        }
-        break;
-      }
-
-      case 14: {
-        this.setPrompt('Please press BLUE pedal\nor RED for menu');
-
-        this.blueButtonIndex = this.getAxisOrButtonIndex();
-        if (this.blueButtonIndex) {
-          this.step = 15;
-        }
-
-        const {red} = this.getPedals();
-        if (red) {
-          this.step = 99;
-        }
-  
-        break;
-      }
-
-      case 15: {
-        this.setPrompt('Please [b]release BLUE[/b] pedal');
-  
-          const {blue} = this.getPedals();
-          if (!blue) {
-            this.step = 16; // release all
-          }
-          break;
-      }
-
-      case 17: {
-        this
-          .setPrompt('Please press [b]BLUE[/b] pedal to the [b]END[/b]' +
-            (this.blueButtonMax > 0.5 ? ', then release' : ''));
-
-        const {blue} = this.getPedals();
-        if (!blue && this.blueButtonMax) {
-          this.step = 99;
-        } else if (blue) {
-          this.blueButtonMax = Math.max(blue, this.blueButtonMax);
-          this.blueMaxIndicator
-            .setScale(this.blueButtonMax);
-        }
-        break;
-      }
-
-      case 99:
-        this.setPrompt('MAIN MENU\n(placeholder)');
-        break;
-    }
-  }
-
-  getAxisOrButtonIndex() {
-    let result = null;
-
-    for (let i = 0; i < this.input.gamepad.total; i++) {
-      const pad = this.input.gamepad.getPad(i);
-
-      if (this.gamepadId && pad.id !== this.gamepadId) {
-        continue;
-      }
-
-      for (const button of pad.buttons) {
-        if (button.value == 0 || button.value >= 1) {
-          continue;
-        }
-        if (result) {
-          return null;
-        }
-        const index = button.index
-        if (this.redButtonIndex === index) {
-          continue;
-        }
-        if (this.greenButtonIndex === index) {
-          continue;
-        }
-
-        this.pad = pad;
-        result = index;
-      }
-
-      for (const axis of pad.axes) {
-        if (axis.value < axis.threshold) {
-          continue;
-        }
-        if (result) {
-          return null;
-        }
-
-        const index = 1000 + axis.index;
-        if (this.redButtonIndex === index) {
-          continue;
-        }
-        if (this.greenButtonIndex === index) {
-          continue;
-        }
-
-        this.pad = pad;
-        result = index;
       }
     }
 
-    return result;
+    this.updateCurve();
   }
 
-  getValue(index) {
-    return index === null
-      ? 0
-      : index >= 1000
-        ? Math.max(0, this.pad.axes[index - 1000].value - this.pad.axes[index - 1000].threshold)
-        : this.pad.buttons[index].value
+  updateCurve() {
+    if (!this.recording.length) {
+      return;
+    }
+
+    const colors = ['red', 'green', 'blue'];
+    const xPadding = 0.1 * this.baseWidth;
+    const xWidth = this.baseWidth - 2 * xPadding;
+    const yPadding = 0.25 * this.baseHeight;
+    const yHeight = this.baseHeight - 2 * yPadding;
+    const curves = Object.fromEntries(
+      colors
+        .map(color => [
+          color,
+          this.recording
+            .reduce((points, {time, [color]: value}) => [
+              ...points,
+              this.fit(
+                xPadding + time / this.maxTime * xWidth,
+                yPadding + (1 - value) * yHeight
+              ),
+            ], [])
+        ])
+    );
+    
+    this.graphics.clear();
+    this.graphics.lineStyle(3, 0x0000ff, 0.5);
+    this.drawCurve(curves.blue);
+    this.graphics.lineStyle(3, 0x00ff00, 0.7);
+    this.drawCurve(curves.green);
+    this.graphics.lineStyle(3, 0xff0000, 1);
+    this.drawCurve(curves.red);
   }
 
-  colors = ['RED', 'GREEN', 'BLUE'];
-  textWithColors(text) {
-    return this.colors
-      .reduce((t, color) => t
-        .replace(`${color}`, `[color=${color.toLowerCase()}]${color}[/color]`)
-      , text);
+  drawCurve(points) {
+    for (let i = 1; i < points.length; i++) {
+      const p1 = points[i-1];
+      const p2 = points[i];
+      this.graphics.lineBetween(p1[0], p1[1], p2[0], p2[1]);
+    }
   }
 
-  setPrompt(text) {
-    this.prompt.setText(this.textWithColors(text));
-  }
+  async save() {
+    const name = window.prompt('Please enter name for exercise');
+    if (!name) {
+      const mainMenu = this.scene.get('main-menu');
+      mainMenu.scene.restart();
+      this.scene.start('main-menu');
+      return;
+    }
 
-  update() {
-    this.updatePrompt();
-    this.updatePedals();
-  }
-
-  getPedals() {
-    return {
-      blue: this.getValue(this.blueButtonIndex),
-      red: this.getValue(this.redButtonIndex),
-      green: this.getValue(this.greenButtonIndex),
-    };
-  }
-
-  updatePedals() {
-    const {red, green, blue} = this.getPedals();
-
-    this.blueIndicator
-      .setScale(blue);
-    this.redIndicator
-      .setScale(red);
-    this.greenIndicator
-      .setScale(green);
-  }
-
-  handleGamepadConnected(pad) {
-    console.debug('Connected', pad);
-  }
-
-  handleGamepadDisconnected(pad) {
-    console.debug('Disconnected', pad);
+    await setDocument({data: this.recording}, 'exercise', name);
+    this.step = 6;
   }
 }
