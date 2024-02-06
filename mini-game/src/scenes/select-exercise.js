@@ -1,9 +1,9 @@
 import MenuScene from "./menu";
-import {setObject} from '../services/localStorage';
-import {getDocuments} from "../services/firebase/db";
+import {getDocuments, deleteDocument} from "../services/firebase/db";
 
 export default class SelectExerciseScene extends MenuScene {
   execises;
+  deleteKey;
 
   constructor() {
     super([], 'train');
@@ -12,11 +12,24 @@ export default class SelectExerciseScene extends MenuScene {
   create() {
     super.create();
 
+    this.deleteKey = this.input.keyboard.addKey('d');
+  }
+
+  init() {
     this.loadExercises();
   }
 
   update() {
     super.update();
+
+    if (this.deleteKey.isDown) {
+      const name = this.items[this.activeItemIndex];
+      if (confirm(`Are you sure you want to delete "${name}"?`)) {
+        deleteDocument('exercise', name).then(() => {
+          this.scene.restart();
+        });
+      }
+    }
   } 
 
   async loadExercises() {

@@ -1,15 +1,9 @@
-import PedalsScene from './pedals';
+import SteppedScene from './stepped';
 import {setDocument} from '../services/firebase/db';
 
-export default class RecorderScene extends PedalsScene {
-  step = 1;
-  recording = [
-    {time: 0, green: 0, red: 0, blue: 0},
-    {time: 2.9, green: 0, red: 0, blue: 0}
-  ];
-  timeStart = null;
-  leadTime = 3;
-  maxTime = this.leadTime + 10;
+export default class RecorderScene extends SteppedScene {
+  recording;
+  maxTime = 20;
   graphics;
 
   constructor() {
@@ -21,98 +15,83 @@ export default class RecorderScene extends PedalsScene {
     this.graphics = this.add.graphics();
   }
 
-  update() {
-    super.update();
+  init(params) {
+    super.init(params);
+    this.recording = [];
+  }
 
-    switch (this.step) {
-      case 1: {
+  handleStep_start(pedals) {
+    this.setPrompt('Please release [b]all pedals[/b]');
+    super.handleStepRelease(pedals, 'trigger');
+  }
+  
+  handleStep_trigger({green}) {
+    this.setPrompt('Please press [b][color=green]full gas[/color][/b] to start');
+    if (green >= 1) {
+      this.currentTime = 0;
+      this.currentStep = 'record';
+    }
+  }
 
-        this.setPrompt('Press release [b]all pedals[/b]');
-
-        const {green, red, blue} = this.getPedals();
-        if (!green && !red && !blue) {
-          this.step = 2;
-        }
-        break;
-      }
-      case 2: {
-        this.setPrompt('Press [b][color=red]brake[/color][/b] to start');
-
-        const {red} = this.getPedals();
-        if (!red) {
-          break;
-        }
-        this.timeStart = Date.now() - this.leadTime * 1000;
-        this.step = 3;
-      }
-
-      case 3: {
-        const time = (Date.now() - this.timeStart) / 1000;
-
-        if (time >= this.maxTime) {
-          this.step = 4;
-          console.debug('recoding', this.recording);
-          break;
-        }
-
-        this.setPrompt(`[b]${(time - this.leadTime).toFixed(2)}[/b] seconds`);
-
-        const pedals = this.getPedals();
-        this.recording.push({
-          time,
-          ...pedals,
-        });
-
-        if (pedals.green >= 1) {
-          this.step = 4;
-        }
-
-        break;
-      }
-
-      case 4: {
-        this.setPrompt('[i]Saving ...[/i]');
-        this.save();
-        this.step = 5;
-        break;
-      }
-
-      case 5: {
-        // wait for async save to step up
-        break;
-      }
-
-      case 6: {
-        const {time} = this.recording[this.recording.length-1];
-        this.setPrompt(`Done ([b]${(time - this.leadTime).toFixed(2)}[/b] seconds)\nPress [b]any pedal[/b] for main menu`);
-
-        const {green, red, blue} = this.getPedals();
-        if (green || red || blue) {
-          this.step = 7;
-        }
-    
-        break;
-      }
-
-      case 7: {
-        this.setPrompt('Please [b]release all[/b] pedals');
-
-        const {blue, red, green} = this.getPedals();
-        if (!blue && !green && !red) {
-          this.step = 8;
-        }
-        break;
-      }
-
-      case 8: {
-        const mainMenu = this.scene.get('main-menu');
-        mainMenu.scene.restart();
-        this.scene.start('main-menu');
-        break;
-      }
+  timeLastRelease;
+  indexLastFullGreen;
+  handleStep_record({time, green, red, blue}) {
+    if (time >= this.maxTime) {
+      this.currentStep = 'save';
+      return;
     }
 
+    this.setPrompt(`[b]${(time).toFixed(2)}[/b] seconds`);
+
+    this.recording.push({
+      time,
+      green,
+      red,
+      blue,
+    });
     this.updateCurve();
+
+    if (!(green > 0.6 || red > 0.6 || blue > 0.6)) {
+      if (!this.timeLastRelease) {
+        this.timeLastRelease = time;
+      } else if (time - this.timeLastRelease >= 3) {
+        this.recording.splice(this.indexLastFullGreen, this.recording.length - this.indexLastFullGreen);
+        this.updateCurve();
+        this.currentStep = 'save';
+      }
+    } else {
+      this.timeLastRelease = undefined;
+    }
+    
+    if (green >= 1) {
+      this.indexLastFullGreen = this.recording.length;
+    }
+  }
+
+  handleStep_save() {
+    this.updateCurve();
+    this.currentStep = 'saving';
+    this.save().then(() => {
+      this.currentStep = 'trigger_main_menu';
+    });
+  }
+
+  handleStep_saving() {
+    this.setPrompt('[i]Saving ...[/i]');
+  }
+
+  handleStep_trigger_main_menu({time, green, red, blue}) {
+    const endTime = this.recording[this.recording.length - 1].time;
+
+    this.setPrompt(`Done ([b]${(endTime).toFixed(2)}[/b] seconds)\nPress [b]any pedal[/b] for main menu`);
+
+    if (green > 0.6 || red > 0.6 || blue > 0.6) {
+      this.currentStep = 'main_menu';
+    }
+  }
+
+  handleAnyStep() {
+    // Do nothing
   }
 
   updateCurve() {
@@ -121,10 +100,10 @@ export default class RecorderScene extends PedalsScene {
     }
 
     const colors = ['red', 'green', 'blue'];
-    const xPadding = 0.1 * this.baseWidth;
+    const xPadding = this.baseWidth / 3;
     const xWidth = this.baseWidth - 2 * xPadding;
     const yPadding = 0.25 * this.baseHeight;
-    const yHeight = this.baseHeight - 2 * yPadding;
+    const yHeight = this.baseHeight / 4;
     const curves = Object.fromEntries(
       colors
         .map(color => [
@@ -133,7 +112,7 @@ export default class RecorderScene extends PedalsScene {
             .reduce((points, {time, [color]: value}) => [
               ...points,
               this.fit(
-                xPadding + time / this.maxTime * xWidth,
+                xPadding + time * this.baseWidth / SECONDS_PER_SCREEN,
                 yPadding + (1 - value) * yHeight
               ),
             ], [])
@@ -147,6 +126,10 @@ export default class RecorderScene extends PedalsScene {
     this.drawCurve(curves.green);
     this.graphics.lineStyle(3, 0xff0000, 1);
     this.drawCurve(curves.red);
+
+    const endTime = this.recording[this.recording.length - 1].time;
+    const [scrollX, _] = this.fit(endTime * this.baseWidth / SECONDS_PER_SCREEN, 0);
+    this.cameras.main.scrollX = scrollX;
   }
 
   drawCurve(points) {
@@ -170,3 +153,5 @@ export default class RecorderScene extends PedalsScene {
     this.step = 6;
   }
 }
+
+const SECONDS_PER_SCREEN = 10;

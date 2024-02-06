@@ -87,21 +87,24 @@ export default class MenuScene extends PedalsScene {
 
     const {green, red, blue} = this.getPedals();
 
-    if (this.enterKey.isDown || red) {
+    if (this.isWaitingForRelease && red <= this.pedals?.red?.threshold) {
+      this.setPrompt('');
+      this.isWaitingForRelease = false;
+      this.handleItemClick(this.items[this.activeItemIndex]);
+    } else if (this.enterKey.isDown) {
+      this.setPrompt('');
+      this.handleItemClick(this.items[this.activeItemIndex]);
+      return;
+    } else if (red > 0.6) {
       this.isWaitingForRelease = true;
       this.setPrompt('Please [b]release all[/b] pedals');
       return;
     }
-    if (this.isWaitingForRelease) {
-      this.setPrompt('');
-      this.isWaitingForRelease = false;
-      this.handleItemClick(this.items[this.activeItemIndex]);
-    }
-
+ 
     const now = Date.now();
 
-    const up = this.cursors.up.isDown || blue;
-    const down = this.cursors.down.isDown || green;
+    const up = this.cursors.up.isDown || blue > 0.6;
+    const down = this.cursors.down.isDown || green > 0.6;
 
     if (!(up || down)) {
       this.timeLastChange = 0;

@@ -11,7 +11,12 @@ export default class SteppedScene extends PedalsScene {
   update(time, delta) {
     super.update(time, delta);
 
-    this[`handleStep_${this.currentStep}`]({
+    const method = `handleStep_${this.currentStep}`;
+    if (!(method in this)) {
+      throw new Error(`cannot handle step ${this.currentStep}`);
+    }
+
+    this[method]({
       time: this.currentTime,
       ...this.currentPedals,
     });
@@ -28,8 +33,10 @@ export default class SteppedScene extends PedalsScene {
     this.scene.start('main-menu');
   }
 
-  handleStepRelese({green, red, blue}, nextStep) {
-    if (!(green || red || blue)) {
+  handleStepRelease({green, red, blue}, nextStep) {
+    if (!(green > 0.6
+      || red > 0.6
+      || blue > 0.6)) {
       this.currentStep = nextStep;
     }
   }  

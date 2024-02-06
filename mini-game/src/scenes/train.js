@@ -15,12 +15,12 @@ export default class TrainScene extends SteppedScene {
   greenPlayer;
   redPlayer;
   
-  radius = 25;
+  radius = 15;
 
-  xPadding = 0.5 * this.baseWidth;
+  xPadding = this.baseWidth / 3;
   xWidth;
-  yPadding = 0.1 * this.baseHeight;
-  yHeight = this.baseHeight - 4 * this.yPadding;
+  yPadding = this.baseHeight / 4;
+  yHeight = this.baseHeight / 3;
   maxTime;
   recording;
 
@@ -48,7 +48,7 @@ export default class TrainScene extends SteppedScene {
     this.data = params.data;
 
     this.maxTime = Math.max(...this.data.map(({time}) => time));
-    this.xWidth = this.baseWidth * this.maxTime / 5;
+    this.xWidth = this.baseWidth * this.maxTime / SECONDS_PER_SCREEN;
 
     this.green = this.getPointsForKey(this.data, 'green');
     this.red = this.getPointsForKey(this.data, 'red');
@@ -225,11 +225,11 @@ export default class TrainScene extends SteppedScene {
   }
 
   handleStep_over_release_1(pedals) {
-    super.handleStepRelese(pedals, 'over_menu');
+    super.handleStepRelease(pedals, 'over_menu');
   }
 
   handleStep_over_release_2(pedals) {
-    super.handleStepRelese(pedals, 'main_menu');
+    super.handleStepRelease(pedals, 'main_menu');
   }
 
   handleStep_over_menu({green, red}) {
@@ -242,9 +242,9 @@ export default class TrainScene extends SteppedScene {
     }
     this.cameras.main.scrollX += this.scoreScrollDirection;
 
-    if (green) {
+    if (green > 0.6) {
       this.currentStep = 'retry';
-    } else if (red) {
+    } else if (red > 0.6) {
       this.currentStep = 'over_release_2';
     }
   }
@@ -320,3 +320,5 @@ export default class TrainScene extends SteppedScene {
     super.updateStep();
   }
 }
+
+const SECONDS_PER_SCREEN = 10;

@@ -19,6 +19,8 @@ export default class PedalsScene extends ResponsiveScene {
       .setOrigin(0.5)
       .setScrollFactor(0);
     this.pedals = getObject('pedals');
+
+    console.log('PEDALS', this.pedals);
   }
   
   update() {
@@ -46,19 +48,24 @@ export default class PedalsScene extends ResponsiveScene {
     }
   }
 
-  getValue(index) {
-    return index === null || this.pad === undefined || !this.pedals?.green
-      ? 0
-      : index >= 1000
-        ? Math.max(0, this.pad.axes[index - 1000].value - this.pad.axes[index - 1000].threshold)
-        : this.pad.buttons[index].value
+  getValue(info) {
+    if (!info || !this.pad || info.index === null) {
+      return 0;
+    }
+
+    const {index, min, max} = info;
+    const value = index >= 1000
+      ? this.pad.axes[index - 1000].value
+      : this.pad.buttons[index].value;
+
+    return Math.min(1, Math.max(0, (value - min) / (max - min)));
   }
 
   getPedals() {
     return {
-      green: this.getValue(this.pedals?.green?.index) / (this.pedals?.green?.max ?? 1),
-      red: this.getValue(this.pedals?.red?.index) / (this.pedals?.red?.max ?? 1),
-      blue: this.getValue(this.pedals?.blue?.index) / (this.pedals?.blue?.max ?? 1),
+      green: this.getValue(this.pedals?.green),
+      red: this.getValue(this.pedals?.red),
+      blue: this.getValue(this.pedals?.blue),
     };
   }
 

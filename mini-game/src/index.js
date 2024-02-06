@@ -10,8 +10,8 @@ import SelectExerciseScene from './scenes/select-exercise';
 const config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
-    width: 800,
-    height: 600,
+    width: window.innerWidth,
+    height: Math.round(window.innerWidth * 9 / 16),
     input: {
         gamepad: true
     },

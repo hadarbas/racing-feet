@@ -7,15 +7,25 @@ export default class SetupScene extends ResponsiveScene {
   blueButtonIndex = null;
   redButtonIndex = null;
   greenButtonIndex = null;
-  blueButtonMax = 0;
-  redButtonMax = 0;
+  greenButtonMin = 0.1;
+  redButtonMin = 0.1;
+  blueButtonMin = 0.1;
   greenButtonMax = 0;
+  redButtonMax = 0;
+  blueButtonMax = 0;
+  greenButtonThreshold = 0;
+  redButtonThreshold = 0;
+  blueButtonThreshold = 0;
   blueMaxIndicator;
   redMaxIndicator;
   greenMaxIndicator;
   blueIndicator;
   greenIndicator;
   pedalStats = {};
+  pedalsText;
+  timeGreen;
+  timeRed;
+  timeBlue;
 
   step = 1
 
@@ -50,7 +60,18 @@ export default class SetupScene extends ResponsiveScene {
         align: 'center',
       })
       .setOrigin(0.5);
-
+    this.pedalsText = this.add.rexBBCodeText(
+      ...this.fit(600, 100),
+      '', {
+        fontSize: 24,
+        fill: '#ffffff',
+        backgroundColor: '#404000',
+        padding: 5,
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0);
+  
     const [xBlue, yBlue] = this.fit(200, 400);
     const [xRed, yRed] = this.fit(800, 400);
     const [xGreen, yGreen] = this.fit(1000, 400);
@@ -80,13 +101,15 @@ export default class SetupScene extends ResponsiveScene {
       case 9:
       case 11:
       case 13:
-      case 16:
+      case 17:
       case 99:
       case 101: {
         this.setPrompt('Please [b]release all[/b] pedals');
 
         const {blue, red, green} = this.getPedals();
-        if (!blue && !green && !red) {
+        if (green <= Math.max(0, this.greenButtonThreshold)
+          && red <= Math.max(0, this.redButtonThreshold)
+          && blue <= Math.max(0, this.blueButtonThreshold)) {
           this.step += 1;
         }
         break;
@@ -97,6 +120,7 @@ export default class SetupScene extends ResponsiveScene {
       
         this.greenButtonIndex = this.getAxisOrButtonIndex();
         if (this.greenButtonIndex) {
+          this.timeGreen = Date.now();
           this.step = 3;
         }
         break;
@@ -105,8 +129,12 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('Please [b]release GREEN[/b] pedal');
 
         const {green} = this.getPedals();
-        if (!green) {
-          this.step = 4; // release all
+        if (green < this.greenButtonMin) {
+          this.greenButtonMin = green;
+          this.timeGreen = Date.now();
+        } else if (green === this.greenButtonMin && Date.now() - this.timeGreen > 1000) {
+          this.greenButtonThreshold = this.greenButtonMin + this.getThreshold(this.greenButtonIndex);
+          this.step = 4;
         }
         break;
       }
@@ -116,25 +144,30 @@ export default class SetupScene extends ResponsiveScene {
 
         this.redButtonIndex = this.getAxisOrButtonIndex();
         if (this.redButtonIndex) {
-          this.step = 7;
+          this.timeRed = Date.now();
+          this.step = 6;
         }
         break;
 
       case 6: {
         this.setPrompt('Please [b]release RED[/b] pedal');
-  
-          const {red} = this.getPedals();
-          if (!red) {
-            this.step = 7; // release all
-          }
-          break;
-        }
 
+        const {red} = this.getPedals();
+        if (red < this.redButtonMin) {
+          this.redButtonMin = red;
+          this.timeRed = Date.now();
+        } else if (red === this.redButtonMin && Date.now() - this.timeRed > 1000) {
+          this.redButtonThreshold = this.redButtonMin + this.getThreshold(this.redButtonIndex);
+          this.step = 7; // release all
+        }
+        break;
+      }
+  
       case 8: {
         this.setPrompt('Please press both [b]GREEN and RED[/b] pedals');
 
         const {red, green} = this.getPedals();
-        if (red && green) {
+        if (red > this.redButtonThreshold && green > this.greenButtonThreshold) {
           this.step = 9; // release all
         }
         break;
@@ -143,12 +176,12 @@ export default class SetupScene extends ResponsiveScene {
       case 10: {
         this
           .setPrompt('Please press [b]GREEN[/b] pedal to the [b]END[/b]' +
-            (this.greenButtonMax > 0.5 ? ', then release' : ''));
+            (this.greenButtonMax > this.greenButtonThreshold ? ', then release' : ''));
 
         const {green} = this.getPedals();
-        if (!green && this.greenButtonMax) {
+        if (green <= this.greenButtonThreshold && this.greenButtonMax) {
           this.step = 11; // release all
-        } else if (green) {
+        } else if (green > this.greenButtonThreshold) {
           this.greenButtonMax = Math.max(green, this.greenButtonMax);
           this.greenMaxIndicator
             .setScale(this.greenButtonMax);
@@ -162,9 +195,9 @@ export default class SetupScene extends ResponsiveScene {
             (this.redButtonMax > 0.5 ? ', then release' : ''));
 
         const {red} = this.getPedals();
-        if (!red && this.redButtonMax) {
+        if (red <= this.redButtonThreshold && this.redButtonMax) {
           this.step = 13; // release all
-        } else if (red) {
+        } else if (red > this.redButtonThreshold) {
           this.redButtonMax = Math.max(red, this.redButtonMax);
           this.redMaxIndicator
             .setScale(this.redButtonMax);
@@ -181,7 +214,7 @@ export default class SetupScene extends ResponsiveScene {
         }
 
         const {red} = this.getPedals();
-        if (red) {
+        if (red > this.redButtonThreshold) {
           this.step = 99;
         }
   
@@ -189,24 +222,39 @@ export default class SetupScene extends ResponsiveScene {
       }
 
       case 15: {
-        this.setPrompt('Please [b]release BLUE[/b] pedal');
+        this.setPrompt('Please [b]press BLUE[/b] pedal');
   
-          const {blue} = this.getPedals();
-          if (!blue) {
-            this.step = 16; // release all
-          }
-          break;
+        const {blue} = this.getPedals();
+        if (blue <= this.blueButtonThreshold) {
+          this.timeBlue = Date.now();
+          this.step = 16; // release all
+        }
+        break;
       }
 
-      case 17: {
-        this
-          .setPrompt('Please press [b]BLUE[/b] pedal to the [b]END[/b]' +
-            (this.blueButtonMax > 0.5 ? ', then release' : ''));
+      case 16: {
+        this.setPrompt('Please [b]release BLUE[/b] pedal');
 
         const {blue} = this.getPedals();
-        if (!blue && this.blueButtonMax) {
+        if (blue < this.blueButtonMin) {
+          this.blueButtonMin = blue;
+          this.timeBlue = Date.now();
+        } else if (Date.now() - this.timeBlue > 2000) {
+          this.blueButtonThreshold = this.blueButtonMin + this.getThreshold(this.blueButtonIndex);
+          this.step = 17; // release all
+        }
+        break;
+      }
+
+      case 18: {
+        this
+          .setPrompt('Please press [b]BLUE[/b] pedal to the [b]END[/b]' +
+            (this.blueButtonMax > this.blueButtonThreshold ? ', then release' : ''));
+
+        const {blue} = this.getPedals();
+        if (blue <= 0 && this.blueButtonMax) {
           this.step = 99;
-        } else if (blue) {
+        } else if (blue > 0.5) {
           this.blueButtonMax = Math.max(blue, this.blueButtonMax);
           this.blueMaxIndicator
             .setScale(this.blueButtonMax);
@@ -218,20 +266,28 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('You\'re all set\nPress any pedal for main menu');
 
         const {green, red, blue} = this.getPedals();
-        if (green || red || blue) {
+        if (green > this.greenButtonThreshold
+          || red > this.redButtonThreshold
+          || blue > this.blueButtonThreshold) {
           setObject('pedals', {
             gamepadId: this.pad.id,
             green: {
               index: this.greenButtonIndex,
+              min: this.greenButtonMin,
               max: this.greenButtonMax,
+              threshold: this.greenButtonThreshold,
             },
             red: {
               index: this.redButtonIndex,
+              min: this.redButtonMin,
               max: this.redButtonMax,
+              threshold: this.redButtonThreshold,
             },
             blue: {
               index: this.blueButtonIndex,
+              min: this.blueButtonMin,
               max: this.blueButtonMax,
+              threshold: this.blueButtonThreshold,
             }
           });
           this.step = 101;
@@ -268,7 +324,7 @@ export default class SetupScene extends ResponsiveScene {
     let result = null;
 
     for (const button of this.pad.buttons) {
-      if (button.value == 0 || button.value >= 1) {
+      if (button.value === 0 || button.value >= 1) {
         continue;
       }
       if (result) {
@@ -315,8 +371,16 @@ export default class SetupScene extends ResponsiveScene {
     return index === null
       ? 0
       : index >= 1000
-        ? Math.max(0, this.pad.axes[index - 1000].value - this.pad.axes[index - 1000].threshold)
+        ? this.pad.axes[index - 1000].value
         : this.pad.buttons[index].value
+  }
+
+  getThreshold(index) {
+    return index === null
+      ? 0
+      : index >= 1000
+        ? this.pad.axes[index - 1000].threshold
+        : this.pad.buttons[index].getThreshold
   }
 
   update() {
@@ -343,6 +407,8 @@ export default class SetupScene extends ResponsiveScene {
       .setScale(red);
     this.greenIndicator
       .setScale(green);
+
+    this.pedalsText.setText(`[b][color=green]${green.toFixed(2)}[/color] [color=red]${red.toFixed(2)}[/color] [color=blue]${blue.toFixed(2)}[/color][/b]`);
   }
 
   handleGamepadConnected(pad) {
