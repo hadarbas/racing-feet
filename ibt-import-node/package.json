@@ -1,0 +1,18 @@
+{
+  "name": "ibt-import-node",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "ibt-telemetry": "^1.1.1",
+    "regenerator-runtime": "^0.14.1"
+  }
+}

@@ -1,2 +1,4 @@
 import {BFSRequire} from 'browserfs';
-export default BFSRequire('buffer');
+const buffer = BFSRequire('buffer');
+window.Buffer = buffer.Buffer;
+export default buffer;
