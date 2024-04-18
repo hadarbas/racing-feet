@@ -6,5 +6,6 @@
     "repository": "https://github.com/lionbur/racing-feet",
     "author": "Lion Burger <lionbur@gmail.com>",
     "license": "MIT",
-    "private": true
+    "private": true,
+    "workspaces": ["mini-game", "ibt-import", "shared"]
 }

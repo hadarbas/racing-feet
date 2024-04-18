@@ -7,11 +7,11 @@ export default class ResponsiveScene extends Phaser.Scene {
   prompt;
 
   preload() {
-    this.load.plugin(
+    /* this.load.plugin(
       'rexbbcodetextplugin',
       'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexbbcodetextplugin.min.js',
       true
-    );
+    ); */
   }
 
   create () {
@@ -20,8 +20,8 @@ export default class ResponsiveScene extends Phaser.Scene {
       ...this.fit(600, 900),
       '', {
         fontSize: 24,
-        fill: '#ffffff',
-        backgroundColor: '#000040',
+        // fill: '#ffffff',
+        // backgroundColor: '#000040',
         padding: 20,
         align: 'center',
       })

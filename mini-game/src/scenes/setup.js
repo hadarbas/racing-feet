@@ -1,5 +1,5 @@
 import ResponsiveScene from './responsive';
-import {getObject, setObject} from '../services/localStorage';
+import {getObject, setObject} from 'shared/services/localStorage';
 
 export default class SetupScene extends ResponsiveScene {
   gamepadId = null;

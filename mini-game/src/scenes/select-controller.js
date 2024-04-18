@@ -1,5 +1,5 @@
 import MenuScene from "./menu";
-import {setObject} from '../services/localStorage';
+import {setObject} from 'shared/services/localStorage';
 
 export default class SelectControllerScene extends MenuScene {
   constructor() {

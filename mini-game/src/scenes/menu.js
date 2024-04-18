@@ -1,5 +1,5 @@
 import PedalsScene from './pedals';
-import {getObject} from '../services/localStorage';
+import {getObject} from 'shared/services/localStorage';
 import menuBackground from "@assets/menu-background.png";
 
 export default class MenuScene extends PedalsScene {

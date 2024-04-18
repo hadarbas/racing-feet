@@ -1,5 +1,7 @@
+import BBCodeText from 'phaser3-rex-plugins/plugins/bbcodetext.js';
+
 import ResponsiveScene from './responsive';
-import {getObject} from '../services/localStorage';
+import {getObject} from 'shared/services/localStorage';
 
 export default class PedalsScene extends ResponsiveScene {
   pedals;
@@ -9,19 +11,24 @@ export default class PedalsScene extends ResponsiveScene {
   create() {
     super.create();
 
-    this.gamepadId = this.add.rexBBCodeText(
+    const txt = new BBCodeText(
+      this.scene.scene,
       ...this.fit(600, 1100),
       '', {
         fontSize: 16,
         fill: '#ffffff',
         align: 'center',
-      })
+      });
+    this.gamepadId = this.scene.scene.add.existing(txt);
+    this.gamepadId
       .setOrigin(0.5)
       .setScrollFactor(0);
+
     this.pedals = getObject('pedals');
 
     console.log('PEDALS', this.pedals);
   }
+
   
   update() {
     super.update();
