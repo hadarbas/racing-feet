@@ -27,7 +27,12 @@ export default class SetupScene extends ResponsiveScene {
   timeRed;
   timeBlue;
 
-  step = 1
+  buttons = {
+    gas: null,
+    brake: null,
+    wheel: null,
+  };
+  step = 1;
 
   constructor () {
     super({key: 'setup-2'});
@@ -106,83 +111,87 @@ export default class SetupScene extends ResponsiveScene {
       case 101: {
         this.setPrompt('Please [b]release all[/b] pedals');
 
-        const {blue, red, green} = this.getPedals();
-        if (green <= Math.max(0, this.greenButtonThreshold)
-          && red <= Math.max(0, this.redButtonThreshold)
-          && blue <= Math.max(0, this.blueButtonThreshold)) {
+        const pressed = this.detectGamepadPressed();
+        if (!pressed) {
           this.step += 1;
         }
         break;
       }
 
-      case 2:
-        this.setPrompt('Please [b]press GREEN[/b] pedal');
+      case 2: {
+        this.setPrompt('Please [b]press GAS[/b] pedal');
       
-        this.greenButtonIndex = this.getAxisOrButtonIndex();
-        if (this.greenButtonIndex) {
+        const pressed = this.detectGamepadPressed();
+        if (pressed) {
+          this.buttons.gas = pressed;
           this.timeGreen = Date.now();
-          this.step = 3;
+          this.step++;
         }
-        break;
+      } break;
 
       case 3: {
-        this.setPrompt('Please [b]release GREEN[/b] pedal');
+        this.setPrompt('Please [b]release GAS[/b] pedal');
 
-        const {green} = this.getPedals();
-        if (green < this.greenButtonMin) {
-          this.greenButtonMin = green;
+        const {gas} = this.getPedals();
+        const minValue = this.buttons.gas.minValue ??
+          this.buttons.gas.threshold;
+        if (gas < minValue) {
+          this.buttons.gas.minValue = gas;
           this.timeGreen = Date.now();
-        } else if (green === this.greenButtonMin && Date.now() - this.timeGreen > 1000) {
-          this.greenButtonThreshold = this.greenButtonMin + this.getThreshold(this.greenButtonIndex);
-          this.step = 4;
+        } else if (gas === minValue && Date.now() - this.timeGreen > 1000) {
+          this.greenButtonThreshold = minValue +
+            this.buttons.gas.threshold;
+          this.step++;
         }
-        break;
-      }
+      } break;
 
-      case 5:
-        this.setPrompt('Please [b]press RED[/b] pedal');
+      case 5: {
+        this.setPrompt('Please [b]press BRAKE[/b] pedal');
 
-        this.redButtonIndex = this.getAxisOrButtonIndex();
-        if (this.redButtonIndex) {
+        const pressed = this.detectGamepadPressed();
+        if (pressed) {
+          this.buttons.brake = pressed;
           this.timeRed = Date.now();
-          this.step = 6;
+          this.step++;
         }
-        break;
+      } break;
 
       case 6: {
-        this.setPrompt('Please [b]release RED[/b] pedal');
+        this.setPrompt('Please [b]release BRAKE[/b] pedal');
 
-        const {red} = this.getPedals();
-        if (red < this.redButtonMin) {
-          this.redButtonMin = red;
+        const {brake} = this.getPedals();
+        const minValue = this.buttons.brake.minValue ??
+          this.buttons.brake.threshold;
+        if (brake < minValue) {
+          this.buttons.brake.minValue = brake;
           this.timeRed = Date.now();
-        } else if (red === this.redButtonMin && Date.now() - this.timeRed > 1000) {
-          this.redButtonThreshold = this.redButtonMin + this.getThreshold(this.redButtonIndex);
-          this.step = 7; // release all
+        } else if (brake === minValue && Date.now() - this.timeRed > 1000) {
+          this.redButtonThreshold = minValue +
+            this.buttons.brake.threshold;
+          this.step++;
         }
-        break;
-      }
+      } break;
   
       case 8: {
-        this.setPrompt('Please press both [b]GREEN and RED[/b] pedals');
+        this.setPrompt('Please press both [b]GAS and BRAKE[/b] pedals');
 
-        const {red, green} = this.getPedals();
-        if (red > this.redButtonThreshold && green > this.greenButtonThreshold) {
-          this.step = 9; // release all
+        const {gas, brake} = this.getPedals();
+        if (brake > this.redButtonThreshold &&
+          gas > this.greenButtonThreshold) {
+          this.step++; // release all
         }
-        break;
-      }
+      } break;
 
       case 10: {
         this
-          .setPrompt('Please press [b]GREEN[/b] pedal to the [b]END[/b]' +
+          .setPrompt('Please press [b]GAS[/b] pedal to the [b]END[/b]' +
             (this.greenButtonMax > this.greenButtonThreshold ? ', then release' : ''));
 
-        const {green} = this.getPedals();
-        if (green <= this.greenButtonThreshold && this.greenButtonMax) {
-          this.step = 11; // release all
-        } else if (green > this.greenButtonThreshold) {
-          this.greenButtonMax = Math.max(green, this.greenButtonMax);
+        const {gas} = this.getPedals();
+        if (gas <= this.greenButtonThreshold && this.greenButtonMax) {
+          this.step ++; // release all
+        } else if (gas > this.greenButtonThreshold) {
+          this.greenButtonMax = Math.max(gas, this.greenButtonMax);
           this.greenMaxIndicator
             .setScale(this.greenButtonMax);
         }
@@ -191,14 +200,14 @@ export default class SetupScene extends ResponsiveScene {
 
       case 12: {
         this
-          .setPrompt('Please press [b]RED[/b] pedal to the [b]END[/b]' +
+          .setPrompt('Please press [b]BRAKE[/b] pedal to the [b]END[/b]' +
             (this.redButtonMax > 0.5 ? ', then release' : ''));
 
-        const {red} = this.getPedals();
-        if (red <= this.redButtonThreshold && this.redButtonMax) {
-          this.step = 13; // release all
-        } else if (red > this.redButtonThreshold) {
-          this.redButtonMax = Math.max(red, this.redButtonMax);
+        const {brake} = this.getPedals();
+        if (brake <= this.redButtonThreshold && this.redButtonMax) {
+          this.step++; // release all
+        } else if (brake > this.redButtonThreshold) {
+          this.redButtonMax = Math.max(brake, this.redButtonMax);
           this.redMaxIndicator
             .setScale(this.redButtonMax);
         }
@@ -206,7 +215,7 @@ export default class SetupScene extends ResponsiveScene {
       }
 
       case 14: {
-        this.setPrompt('Please press BLUE pedal\nor RED for menu');
+        this.setPrompt('Please turn [b]WHEEL[/b] left or right\n(skip with [b]BRAKE[/b] for menu)');
 
         this.blueButtonIndex = this.getAxisOrButtonIndex();
         if (this.blueButtonIndex) {
@@ -222,7 +231,7 @@ export default class SetupScene extends ResponsiveScene {
       }
 
       case 15: {
-        this.setPrompt('Please [b]press BLUE[/b] pedal');
+        this.setPrompt('Please [b]press WHEEL[/b] pedal');
   
         const {blue} = this.getPedals();
         if (blue <= this.blueButtonThreshold) {
@@ -233,7 +242,7 @@ export default class SetupScene extends ResponsiveScene {
       }
 
       case 16: {
-        this.setPrompt('Please [b]release BLUE[/b] pedal');
+        this.setPrompt('Please [b]release WHEEL[/b] pedal');
 
         const {blue} = this.getPedals();
         if (blue < this.blueButtonMin) {
@@ -248,7 +257,7 @@ export default class SetupScene extends ResponsiveScene {
 
       case 18: {
         this
-          .setPrompt('Please press [b]BLUE[/b] pedal to the [b]END[/b]' +
+          .setPrompt('Please press [b]WHEEL[/b] pedal to the [b]END[/b]' +
             (this.blueButtonMax > this.blueButtonThreshold ? ', then release' : ''));
 
         const {blue} = this.getPedals();
@@ -302,6 +311,16 @@ export default class SetupScene extends ResponsiveScene {
     }
   }
 
+  get pads() {
+    const result = [];
+
+    for (let i = 0; i < this.input.gamepad.total; i++) {
+      result.push(this.input.gamepad.getPad(i));
+    }
+
+    return result;
+  }
+
   collectPedalStats() {
     for (let i = 0; i < this.input.gamepad.total; i++) {
       const pad = this.input.gamepad.getPad(i);
@@ -320,67 +339,47 @@ export default class SetupScene extends ResponsiveScene {
     }
   }
 
-  getAxisOrButtonIndex() {
-    let result = null;
-
-    for (const button of this.pad.buttons) {
-      if (button.value === 0 || button.value >= 1) {
-        continue;
+  detectGamepadPressed() {
+    for (const pad of this.pads) {
+      for (const button of pad.buttons) {
+        if (button.value >= button.threshold && button.value <= 1) {
+          return {
+            type: 'button',
+            padId: pad.id,
+            index: button.index,
+            threshold: button.threshold,
+          };
+        }
       }
-      if (result) {
-        return null;
+      for (const axis of pad.axes) {
+        if (axis.value >= axis.threshold && axis.value <= 1) {
+          return {
+            type: 'axis',
+            padId: pad.id,
+            index: axis.index,
+            threshold: axis.threshold,
+          };
+        }
       }
-      const index = button.index
-      if (this.redButtonIndex === index) {
-        continue;
-      }
-      if (this.greenButtonIndex === index) {
-        continue;
-      }
-
-      result = index;
     }
 
-    for (const axis of this.pad.axes) {
-      if (axis.value <= Math.max(0.5, axis.threshold)) {
-        continue;
-      }
-      if (result) {
-        return null;
-      }
-
-      const index = 1000 + axis.index;
-      if (this.redButtonIndex === index) {
-        continue;
-      }
-      if (this.greenButtonIndex === index) {
-        continue;
-      }
-
-      result = index;
-    }
-
-    return result;
+    return null;
   }
 
   updateGamepadId() {
     this.gamepadId.setText(`[color=#888]Game Controller:\n[/color]${this.pad.id}`);
   }
 
-  getValue(index) {
-    return index === null
-      ? 0
-      : index >= 1000
-        ? this.pad.axes[index - 1000].value
-        : this.pad.buttons[index].value
-  }
+  getValue(key) {
+    if (key === null) {
+      return 0;
+    }
+    const {type, padId, index} = key;
 
-  getThreshold(index) {
-    return index === null
-      ? 0
-      : index >= 1000
-        ? this.pad.axes[index - 1000].threshold
-        : this.pad.buttons[index].getThreshold
+    const pad = this.pads.find(pad => pad.id === padId);
+    return type === 'axis'
+      ? pad?.axes[index].value ?? 0
+      : pad?.buttons[index].value ?? 0;
   }
 
   update() {
@@ -392,23 +391,26 @@ export default class SetupScene extends ResponsiveScene {
 
   getPedals() {
     return {
-      blue: this.getValue(this.blueButtonIndex),
-      red: this.getValue(this.redButtonIndex),
-      green: this.getValue(this.greenButtonIndex),
+      gas: this.getValue(this.buttons.gas),
+      brake: this.getValue(this.buttons.brake),
+      wheel: this.getValue(this.buttons.wheel),
     };
   }
 
   updatePedals() {
-    const {red, green, blue} = this.getPedals();
+    const {gas, brake, wheel} = this.getPedals();
 
-    this.blueIndicator
-      .setScale(blue);
-    this.redIndicator
-      .setScale(red);
     this.greenIndicator
-      .setScale(green);
+      .setScale(gas);
+    this.redIndicator
+      .setScale(brake);
+    this.blueIndicator
+      .setScale(wheel);
 
-    this.pedalsText.setText(`[b][color=green]${green.toFixed(2)}[/color] [color=red]${red.toFixed(2)}[/color] [color=blue]${blue.toFixed(2)}[/color][/b]`);
+    this.pedalsText.setText(`[b][color=green]${
+      gas.toFixed(2)}[/color] [color=red]${
+      brake.toFixed(2)}[/color] [color=blue]${
+      wheel.toFixed(2)}[/color][/b]`);
   }
 
   handleGamepadConnected(pad) {

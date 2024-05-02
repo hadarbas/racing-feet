@@ -8836,7 +8836,7 @@ join-path@^1.1.1:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
-js-yaml@^3.13.1, js-yaml@^3.8.4:
+js-yaml@3.14.1, js-yaml@^3.13.1, js-yaml@^3.8.4:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
   integrity sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==
@@ -11476,6 +11476,11 @@ react-is@^18.0.0, react-is@^18.2.0:
   version "18.2.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.2.0.tgz#199431eeaaa2e09f86427efbb4f1473edb47609b"
   integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
+
+react-json-editor-viewer@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/react-json-editor-viewer/-/react-json-editor-viewer-1.0.7.tgz#e1a23d2d3f98ed45f962fbe04d96102805e63074"
+  integrity sha512-vDgNOyhWhIsTIvmfIW84ZAWtLx0FAiStI+GLvqQ8/Tz05lBsgGCzOfBHduJKYBD40UamhDRMgaa6vYHbO4g4ig==
 
 react-json-view@^1.21.3:
   version "1.21.3"

@@ -8,6 +8,7 @@ import {
 } from 'react-timeseries-charts';
 import {TimeSeries} from 'pondjs';
 import JsonView from 'react-json-view';
+import {JSONEditor} from 'react-json-editor-viewer';
 import Button from '@mui/joy/Button';
 
 import { setDocument, serverTimestamp } from 'shared/services/firebase/db';
@@ -86,12 +87,20 @@ function Import() {
       }));
       await setDocument({timeLastUpdated: serverTimestamp()}, 'category', meta.category);
       await setDocument({data}, 'category', meta.category, 'exercise', meta.name);
+
+      alert(`צק uploaded for ${meta.name} in ${meta.category}`);
     } catch (error) {
       console.error(error);
     } finally {
       setIsSaving(false);
     }
   }, [meta]);
+  const handleJsonChange = useCallback((key, value, parent, data) => {
+    setMeta({
+      ...data,
+      [key]: value,
+    });
+  }, []);
 
   return (<RootContainer>
     <TopPane>
@@ -184,8 +193,10 @@ function Import() {
             </Table>
       )}</AutoSizer>}
       <SnapRight>
-        <JsonView
-          src={meta} />
+        <JSONEditor
+          data={meta}
+          onChange={handleJsonChange}
+        />
       </SnapRight>
     </RowPane>
   </RootContainer>);

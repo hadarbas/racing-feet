@@ -33,8 +33,11 @@ export const loadCsvFile = async (file) => {
     reader.onload = () => {
       const data = reader.result;
 
-      const lines = data.split('\n');
-      const lineSeparatorIndex = findBackwardsIndex(lines, line => !line);
+      const lines = data.split(/\r?\n/);
+      const lineSeparatorIndex = findBackwardsIndex(lines, line =>
+        line
+          .split(',')
+          .every(cell => !cell));
       if (lineSeparatorIndex === -1) {
         return resolve({
           meta: null,
@@ -44,7 +47,7 @@ export const loadCsvFile = async (file) => {
       const meta = Object.fromEntries(
         lines
           .slice(lineSeparatorIndex + 1)
-          .map(line => line.split('='))
+          .map(line => line.split(',')[0].split('='))
           .map(([key, value]) => [
             camelCase(key.trim()),
             value ? value.trim() : null,
