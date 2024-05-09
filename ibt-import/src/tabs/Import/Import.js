@@ -88,7 +88,7 @@ function Import() {
       await setDocument({timeLastUpdated: serverTimestamp()}, 'category', meta.category);
       await setDocument({data}, 'category', meta.category, 'exercise', meta.name);
 
-      alert(`צק uploaded for ${meta.name} in ${meta.category}`);
+      alert(`Successfully uploaded exercise ${meta.name} in ${meta.category}`);
     } catch (error) {
       console.error(error);
     } finally {

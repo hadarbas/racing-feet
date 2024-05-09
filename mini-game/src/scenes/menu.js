@@ -10,7 +10,7 @@ export default class MenuScene extends PedalsScene {
   cursors = null;
   enterKey = null;
   timeLastChange = 0;
-  isWaitingForRelease = false;
+  waitingForPedal = null;
   
   constructor (items, key) {
     super({key});
@@ -85,30 +85,37 @@ export default class MenuScene extends PedalsScene {
       return;
     }
 
-    const {green, red, blue} = this.getPedals();
+    const {gas, brake, wheel} = this.getPedals();
 
-    if (this.isWaitingForRelease && red <= this.pedals?.red?.threshold) {
-      this.setPrompt('');
-      this.isWaitingForRelease = false;
-      this.handleItemClick(this.items[this.activeItemIndex]);
+    if (this.waitingForPedal &&
+      gas < 0.2 &&
+      brake < 0.2) {
+      this.setPrompt(this.waitingForPedal);
+      if (this.waitingForPedal === "gas") {
+        this.handleItemClick(this.items[this.activeItemIndex]);
+      } else {
+        this.scene.start('main-menu');
+      }
+      this.waitingForPedal = null;
     } else if (this.enterKey.isDown) {
       this.setPrompt('');
       this.handleItemClick(this.items[this.activeItemIndex]);
-      return;
-    } else if (red > 0.6) {
-      this.isWaitingForRelease = true;
+    } else if (brake >= 0.2 /*this.pedals?.brake?.min*/) {
+      this.waitingForPedal = 'brake';
       this.setPrompt('Please [b]release all[/b] pedals');
-      return;
+    } else if (gas >= 0.2 /*this.pedals?.gas?.min * 2*/) {
+      this.waitingForPedal = 'gas';
+      this.setPrompt('Please [b]release all[/b] pedals');
     }
  
     const now = Date.now();
 
-    const up = this.cursors.up.isDown || blue > 0.6;
-    const down = this.cursors.down.isDown || green > 0.6;
+    const up = this.cursors.up.isDown || wheel < -0.075;
+    const down = this.cursors.down.isDown || wheel > 0.075;
 
     if (!(up || down)) {
       this.timeLastChange = 0;
-    } else if (now - this.timeLastChange > 500) {
+    } else if (now - this.timeLastChange > 1500) {
       this
         .container
         .list

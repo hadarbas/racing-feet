@@ -3,7 +3,7 @@ import {setObject} from 'shared/services/localStorage';
 
 export default class SelectControllerScene extends MenuScene {
   constructor() {
-    super([], 'setup');
+    super([], 'select-controller');
   }
 
   update() {

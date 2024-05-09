@@ -85,9 +85,13 @@ export default class RecorderScene extends SteppedScene {
 
     this.setPrompt(`Done ([b]${(endTime).toFixed(2)}[/b] seconds)\nPress [b]any pedal[/b] for main menu`);
 
-    if (green > 0.6 || red > 0.6 || blue > 0.6) {
-      this.currentStep = 'main_menu';
+    if (green > 0.6 || red > 0.6) {
+      this.currentStep = 'release_main_menu';
     }
+  }
+
+  handleStep_release_main_menu({green, red}) {
+    super.handleStepRelease({green, red}, 'main-menu');
   }
 
   handleAnyStep() {

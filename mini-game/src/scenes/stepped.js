@@ -33,10 +33,8 @@ export default class SteppedScene extends PedalsScene {
     this.scene.start('main-menu');
   }
 
-  handleStepRelease({green, red, blue}, nextStep) {
-    if (!(green > 0.6
-      || red > 0.6
-      || blue > 0.6)) {
+  handleStepRelease({green, red}, nextStep) {
+    if (green < 0.2 && red < 0.2) {
       this.currentStep = nextStep;
     }
   }  

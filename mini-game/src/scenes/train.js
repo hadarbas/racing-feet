@@ -244,7 +244,7 @@ export default class TrainScene extends SteppedScene {
 
     if (green > 0.6) {
       this.currentStep = 'retry';
-    } else if (red > 0.6) {
+    } else if (red > 0.2) {
       this.currentStep = 'over_release_2';
     }
   }
