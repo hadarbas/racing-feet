@@ -2,40 +2,62 @@ import ResponsiveScene from './responsive';
 import {getObject, setObject} from 'shared/services/localStorage';
 
 export default class SetupScene extends ResponsiveScene {
-  gamepadId = null;
-  pad = null;
-  blueButtonIndex = null;
-  redButtonIndex = null;
-  greenButtonIndex = null;
-  greenButtonMin = null;
-  redButtonMin = null;
-  greenButtonMax = 0;
-  redButtonMax = 0;
-  greenButtonThreshold = 0;
-  redButtonThreshold = 0;
-  blueButtonThreshold = 0;
+  gamepadId;
+  pad;
+  blueButtonIndex;
+  redButtonIndex;
+  greenButtonIndex;
+  greenButtonMin;
+  redButtonMin;
+  greenButtonMax;
+  redButtonMax;
+  greenButtonThreshold;
+  redButtonThreshold;
+  blueButtonThreshold;
   blueMaxIndicator;
   redMaxIndicator;
   greenMaxIndicator;
   blueIndicator;
   greenIndicator;
-  pedalStats = {};
+  pedalStats;
   pedalsText;
   timeGreen;
   timeRed;
   timeBlue;
-
-  buttons = {
-    gas: null,
-    brake: null,
-    wheel: null,
-  };
-  step = 1;
+  buttons;
+  step;
 
   constructor () {
     super({key: 'setup'});
   }
-      
+    
+  init() {
+    this.gamepadId = null;
+    this.pad = null;
+    this.blueButtonIndex = null;
+    this.redButtonIndex = null;
+    this.greenButtonIndex = null;
+    this.greenButtonMin = null;
+    this.redButtonMin = null;
+    this.greenButtonMax = 0;
+    this.redButtonMax = 0;
+    this.greenButtonThreshold = 0;
+    this.redButtonThreshold = 0;
+    this.blueButtonThreshold = 0;
+    this.blueMaxIndicator;
+    this.redMaxIndicator;
+    this.greenMaxIndicator;
+    this.blueIndicator;
+    this.greenIndicator;
+    this.pedalStats = {};
+    this.buttons = {
+      gas: null,
+      brake: null,
+      wheel: null,
+    };
+    this.step = 1;
+  }
+
   create() {
     super.create();
 
@@ -80,15 +102,19 @@ export default class SetupScene extends ResponsiveScene {
       .setScale(0);
   }
 
-  updatePrompt() {
+  updateState() {
     switch (this.step) {
+      // an intermediary step
       case 1:
       case 4: 
       case 7:
       case 9:
       case 11:
       case 13:
+      case 15:
       case 17:
+      case 19:
+      case 21:
       case 99:
       case 101: {
         this.setPrompt('Please [b]release all[/b] pedals');
@@ -131,14 +157,12 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('Please [b]release GAS[/b] pedal and wait 1 second');
 
         const {gas} = this.getPedals();
-        const minValue = this.buttons.gas.minValue ??
-          this.buttons.gas.threshold;
+        const minValue = isNaN(this.buttons.gas.minValue) ?
+          this.buttons.gas.threshold : this.buttons.gas.minValue;
         if (gas < minValue) {
-          this.buttons.gas.minValue = gas;
+          this.buttons.gas.minValue = Math.min(gas, minValue);
           this.timeGreen = Date.now();
         } else if (gas === minValue && Date.now() - this.timeGreen > 1000) {
-          this.greenButtonThreshold = Math.min(1, minValue +
-            this.buttons.gas.threshold);
           this.step++;
         }
       } break;
@@ -182,6 +206,23 @@ export default class SetupScene extends ResponsiveScene {
 
       case 10: {
         this
+          .setPrompt('Please press [b]GAS[/b] pedal to the [b]THRESHOLD[/b],\n'
+            + 'then release and wait 1 second');
+
+        const {gas} = this.getPedals();
+        this.greenButtonThreshold = Math.max(gas, this.greenButtonThreshold);
+        if (gas > this.greenButtonThreshold) {
+          this.timeGreen = Date.now();
+          this.greenButtonMax = this.greenButtonThreshold;
+          this.greenMaxIndicator
+            .setScale(this.greenButtonThreshold);
+        } else if (this.greenButtonThreshold > 0.2 && Date.now() - this.timeGreen > 1000) {
+          this.step++; // release all
+        }
+      } break;
+
+      case 12: {
+        this
           .setPrompt('Please press [b]GAS[/b] pedal to the [b]END[/b]' +
             (this.greenButtonMax >= this.greenButtonThreshold ? ', then release' : ''));
 
@@ -195,7 +236,24 @@ export default class SetupScene extends ResponsiveScene {
         }
       } break;
 
-      case 12: {
+      case 14: {
+        this
+          .setPrompt('Please press [b]BRAKE[/b] pedal to the [b]THRESHOLD[/b],\n'
+            + 'then release and wait 1 second');
+
+        const {brake} = this.getPedals();
+        this.redButtonThreshold = Math.max(brake, this.redButtonThreshold);
+        if (brake > this.redButtonThreshold) {
+          this.timeRed = Date.now();
+          this.redButtonMax = this.redButtonThreshold;
+          this.redMaxIndicator
+            .setScale(this.redButtonThreshold);
+        } else if (this.redButtonThreshold > 0.2 && Date.now() - this.timeRed > 1000) {
+          this.step++; // release all
+        }
+      } break;
+
+      case 16: {
         this
           .setPrompt('Please press [b]BRAKE[/b] pedal to the [b]END[/b]' +
             (this.redButtonMax >= this.redButtonThreshold ? ', then release' : ''));
@@ -210,7 +268,7 @@ export default class SetupScene extends ResponsiveScene {
         }
       } break;
 
-      case 14: {
+      case 18: {
         this.setPrompt('Please turn [b]steering wheel RIGHT[/b]');
 
         const pressed = this.detectGamepadPressed();
@@ -226,7 +284,7 @@ export default class SetupScene extends ResponsiveScene {
 
       } break;
 
-      case 15: {
+      case 20: {
         this.setPrompt('Please turn[b]steering wheel LEFT[/b]');
   
         const {wheel} = this.getPedals();
@@ -236,7 +294,7 @@ export default class SetupScene extends ResponsiveScene {
         }
       } break;
 
-      case 16: {
+      case 22: {
         this.setPrompt('Please [b]release steering wheel[/b] and wait 1 second');
 
         const {wheel} = this.getPedals();
@@ -366,7 +424,7 @@ export default class SetupScene extends ResponsiveScene {
   update() {
     super.update();
     
-    this.updatePrompt();
+    this.updateState();
     this.updatePedals();
   }
 

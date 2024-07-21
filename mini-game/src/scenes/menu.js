@@ -100,10 +100,10 @@ export default class MenuScene extends PedalsScene {
     } else if (this.enterKey.isDown) {
       this.setPrompt('');
       this.handleItemClick(this.items[this.activeItemIndex]);
-    } else if (brake >= 0.2 /*this.pedals?.brake?.min*/) {
+    } else if (brake >= this.pedals?.brake?.threshold) {
       this.waitingForPedal = 'brake';
       this.setPrompt('Please [b]release all[/b] pedals');
-    } else if (gas >= 0.2 /*this.pedals?.gas?.min * 2*/) {
+    } else if (gas >= this.pedals?.gas?.threshold) {
       this.waitingForPedal = 'gas';
       this.setPrompt('Please [b]release all[/b] pedals');
     }

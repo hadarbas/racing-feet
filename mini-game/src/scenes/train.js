@@ -111,7 +111,7 @@ export default class TrainScene extends SteppedScene {
       .forEach(player => player.setVisible(false));
   }
 
-  handleStep_start({green}) {
+  handleStep_start({green, red}) {
     if (green >= 1) {
       Object.entries({
         green: this.greenPlayer,
@@ -122,6 +122,9 @@ export default class TrainScene extends SteppedScene {
 
       this.currentStep = 'play';
       this.currentTime = 0;
+    }
+    if (red >= 1) {
+      this.currentStep = 'over_release_2';
     }
   }
 
@@ -260,7 +263,8 @@ export default class TrainScene extends SteppedScene {
 
     this.setPrompt([
       `Score: [b]${this.score}[/b]`, {
-        start: 'Please press [b][color=green]full gas[/color][/b] to start',
+        start: 'Please press [b]full gas[/b] to start\n'
+          + 'or [b]full brake[/b] to return to main menu',
         over_release_1: 'Please release all pedals',
         over_menu: `Please press [b][color=green]full gas[/color][/b] to retry\nor [b][color=red]brake[/color][/b] for main menu`,
         over_release_2: 'Please release all pedals for main menu',

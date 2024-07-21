@@ -25,11 +25,14 @@ export default class RecorderScene extends SteppedScene {
     super.handleStepRelease(pedals, 'trigger');
   }
   
-  handleStep_trigger({green}) {
-    this.setPrompt('Please press [b][color=green]full gas[/color][/b] to start');
+  handleStep_trigger({green, red}) {
+    this.setPrompt('Please press [b]full gas[/b] to start recording\n'
+      + 'or [b]full brake[/b] to cancel');
     if (green >= 1) {
       this.currentTime = 0;
       this.currentStep = 'record';
+    } else if (red >= 1) {
+      this.currentStep = 'release_main_menu';
     }
   }
 
@@ -83,7 +86,8 @@ export default class RecorderScene extends SteppedScene {
   handleStep_trigger_main_menu({time, green, red, blue}) {
     const endTime = this.recording[this.recording.length - 1].time;
 
-    this.setPrompt(`Done ([b]${(endTime).toFixed(2)}[/b] seconds)\nPress [b]any pedal[/b] for main menu`);
+    this.setPrompt(`Done ([b]${(endTime).toFixed(2)}[/b] seconds)\n`
+    + 'Press [b]any pedal[/b] for main menu');
 
     if (green > 0.6 || red > 0.6) {
       this.currentStep = 'release_main_menu';
@@ -91,7 +95,8 @@ export default class RecorderScene extends SteppedScene {
   }
 
   handleStep_release_main_menu({green, red}) {
-    super.handleStepRelease({green, red}, 'main-menu');
+    this.setPrompt(`Release all pedals for main menu`);
+    super.handleStepRelease({green, red}, 'main_menu');
   }
 
   handleAnyStep() {
