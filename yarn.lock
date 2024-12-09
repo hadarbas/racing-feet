@@ -689,9 +689,6 @@
   version "7.24.1"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-flow-strip-types/-/plugin-transform-flow-strip-types-7.24.1.tgz#fa8d0a146506ea195da1671d38eed459242b2dcc"
   integrity sha512-iIYPIWt3dUmUKKE10s3W+jsQ3icFkw0JyRVyY1B7G4yK/nngAOHLVx8xlhA6b/Jzl/Y0nis8gjqhqKtRDQqHWQ==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.24.0"
-    "@babel/plugin-syntax-flow" "^7.24.1"
 
 "@babel/plugin-transform-for-of@^7.24.1":
   version "7.24.1"
