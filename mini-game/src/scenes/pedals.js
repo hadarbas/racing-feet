@@ -52,19 +52,17 @@ export default class PedalsScene extends ResponsiveScene {
   }
 
   padById(id) {
-    if (!id) {
-      return null;
-    }
-    
+    if (!id) return null;
+  
     for (let i = 0; i < this.input.gamepad.total; i++) {
       const pad = this.input.gamepad.getPad(i);
       if (pad?.id === id) {
         return pad;
       }
     }
-
     return null;
   }
+  
   
   update() {
     super.update();
@@ -102,6 +100,7 @@ export default class PedalsScene extends ResponsiveScene {
       return 0;
     }
 
+    if (info.padId != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
     const {padId, type, index, min, max} = info;
     
     const pad = this.padById(padId);
@@ -113,6 +112,19 @@ export default class PedalsScene extends ResponsiveScene {
       pad.axes[index].value : pad.buttons[index].value;
 
     return Math.min(1, Math.max(0, (value - min) / (max - min)));
+  } else if (info.padId == "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
+    const {padId, type, index, min, max} = info;
+    
+    const pad = this.padById(padId);
+    if (!pad) {
+      return 0;
+    }
+
+    const value = type === 'axis' ?
+      pad.axes[index].value : pad.buttons[index].value;
+
+    return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
+  } 
   }
 
   getPedals() {

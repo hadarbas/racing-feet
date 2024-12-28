@@ -379,6 +379,7 @@ export default class SetupScene extends ResponsiveScene {
 
   detectGamepadPressed() {
     for (const pad of this.pads) {
+      if (pad.id != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
       for (const button of pad.buttons) {
         if (button.value >= button.threshold) {
           return {
@@ -400,8 +401,19 @@ export default class SetupScene extends ResponsiveScene {
           };
         }
       }
+  } else {
+    for (const axis of pad.axes) {
+      if (((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) || (axis.index == 0 && (axis.value > 0+axis.threshold || axis.value < 0 - axis.threshold)))  {
+        return {
+          type: 'axis',
+          padId: pad.id,
+          index: axis.index,
+          threshold: axis.threshold,
+        };
+      }
     }
-
+  }
+    }
     return null;
   }
 
