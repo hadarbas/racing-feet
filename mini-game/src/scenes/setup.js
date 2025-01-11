@@ -157,13 +157,14 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('Please [b]release GAS[/b] pedal and wait 1 second');
 
         const {gas} = this.getPedals();
-        const minValue = isNaN(this.buttons.gas.minValue) ?
-          this.buttons.gas.threshold : this.buttons.gas.minValue;
+        const minValue = isNaN(this.buttons.gas.minValue) ? this.buttons.gas.threshold : this.buttons.gas.minValue;
         if (gas < minValue) {
           this.buttons.gas.minValue = Math.min(gas, minValue);
           this.timeGreen = Date.now();
         } else if (gas === minValue && Date.now() - this.timeGreen > 1000) {
           this.step++;
+        } else if (gas > minValue){
+          this.buttons.gas.minValue = undefined
         }
       } break;
 
@@ -191,6 +192,8 @@ export default class SetupScene extends ResponsiveScene {
           this.redButtonThreshold = Math.min(1, minValue +
             this.buttons.brake.threshold);
           this.step++;
+        } else if (brake > minValue){
+          this.buttons.brake.minValue = undefined
         }
       } break;
   
@@ -404,11 +407,17 @@ export default class SetupScene extends ResponsiveScene {
   } else {
     for (const axis of pad.axes) {
       if (((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) || (axis.index == 0 && (axis.value > 0+axis.threshold || axis.value < 0 - axis.threshold)))  {
+       var  threshold = axis.threshold
+
+        if (axis.index == 2 || axis.index == 5){
+          threshold = 1
+        }
+        
         return {
           type: 'axis',
           padId: pad.id,
           index: axis.index,
-          threshold: axis.threshold,
+          threshold: threshold,
         };
       }
     }
