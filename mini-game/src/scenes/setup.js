@@ -382,6 +382,7 @@ export default class SetupScene extends ResponsiveScene {
 
   detectGamepadPressed() {
     for (const pad of this.pads) {
+      console.log(pad.id)
       if (pad.id != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
       for (const button of pad.buttons) {
         if (button.value >= button.threshold) {
