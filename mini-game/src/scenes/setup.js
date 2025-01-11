@@ -138,6 +138,8 @@ export default class SetupScene extends ResponsiveScene {
           }
 
           this.step += 1;
+        } else {
+          console.log(pressed)
         }
         break;
       }
