@@ -17,6 +17,12 @@ export default class SelectExerciseScene extends MenuScene {
   }
 
   init(params) {
+    this.firstItemIndex = 0;
+      this.activeItemIndex = 0;
+      this.timeLastChange = 0;
+      this.container = null;
+      this.items = [];
+      this.itemHeight = 0;
     this.selectedCategory = params.category;
     this.loadExercises();
   }

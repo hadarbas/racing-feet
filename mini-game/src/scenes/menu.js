@@ -35,48 +35,55 @@ export default class MenuScene extends PedalsScene {
       .setTint(0x04040, 0x000040, 0x004000, 0x404040);
 
     this.createItems();
-    
+
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.enterKey = this.input.keyboard.addKey('ENTER');    
+    this.enterKey = this.input.keyboard.addKey('ENTER');
+}
+
+createItems(fontSize) {
+  if (!this.items || !this.items.length) {
+    return;
   }
 
-  createItems(fontSize) {
-    if (!this.items.length) {
-      return;
-    }
-
-    if (this.container) {
-      this.container.setVisible(false);
-      this.container.destroy();
-    }
-
-    this.padding = this.baseHeight * 0.2;
-    const innerHeight = this.baseHeight - 2 * this.padding;
-    this.itemHeight = Math.floor(innerHeight / this.items.length);
-    this.itemStyle = {
-      fontSize: fontSize || Math.min(48, Math.floor(this.itemHeight / 2)),
-      fill: '#888',
-    };
-    this.activeItemStyle = {
-      fontSize: (fontSize || Math.min(48, Math.floor(this.itemHeight / 2))) * 1.2,
-      fontWeight: 600,
-      fill: '#fff',
-    };
-    
-    this.container = this.add.container(
-      0, 0,
-      this.items
-        .map((item, index) =>
-          this.add.text(
-            ...this.fit(600, this.padding + index * this.itemHeight),
-            item,
-            index === this.activeItemIndex ? this.activeItemStyle : this.itemStyle
-          )
-            .setOrigin(0.5)
-            .setShadow(4, 4, 0x000000)
-        )
-    );
+  if (this.container) {
+    this.container.each(item => item.destroy());
+    this.container.removeAll(true);
+    this.container.destroy();
+    this.container = null;
   }
+
+  this.padding = this.baseHeight * 0.2;
+  const innerHeight = this.baseHeight - 2 * this.padding;
+  this.itemHeight = Math.floor(innerHeight / this.items.length);
+
+  const defaultFontSize = fontSize || Math.min(48, Math.floor(this.itemHeight / 2));
+  this.itemStyle = {
+    fontSize: defaultFontSize,
+    fill: '#888',
+  };
+
+  this.activeItemStyle = {
+    fontSize: defaultFontSize * 1.2,
+    fontWeight: 600,
+    fill: '#fff',
+  };
+
+  const tempContainer = this.add.container(0, 0).setVisible(false);
+
+  this.items.forEach((item, index) => {
+    const text = this.add.text(
+      ...this.fit(600, this.padding + index * this.itemHeight),
+      item,
+      index === this.activeItemIndex ? this.activeItemStyle : this.itemStyle
+    )
+      .setOrigin(0.5)
+      .setShadow(4, 4, 0x000000);
+
+    tempContainer.add(text);
+  });
+
+  this.container = tempContainer.setVisible(true);
+}
 
   update() {
     super.update();
@@ -110,8 +117,8 @@ export default class MenuScene extends PedalsScene {
  
     const now = Date.now();
 
-    const up = this.cursors.up.isDown || wheel < -0.075;
-    const down = this.cursors.down.isDown || wheel > 0.075;
+    const up = this.cursors.up.isDown /*|| wheel < -0.075;*/
+    const down = this.cursors.down.isDown /*|| wheel > 0.075;*/
 
     if (!(up || down)) {
       this.timeLastChange = 0;

@@ -3,7 +3,7 @@ import {setDocument} from 'shared/services/firebase/db';
 
 export default class RecorderScene extends SteppedScene {
   recording;
-  maxTime = 20;
+  maxTime = 500;
   graphics;
 
   constructor() {
