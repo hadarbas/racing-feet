@@ -1,9 +1,8 @@
-
 import BaseTrainScene from './train-base';
 
-export default class TrainScene extends BaseTrainScene {
+export default class TrainExerciseScene extends BaseTrainScene {
   constructor() {
-    super({ key: 'train-2' });
+    super({ key: 'train-3' });
   }
 
   create() {
@@ -11,18 +10,19 @@ export default class TrainScene extends BaseTrainScene {
     this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
     this.escapeKey.on('down', () => {
-        this.scene.start('train'); 
+        this.scene.start('recorded-exercises'); 
     });
 }
+
 }
 
-
-
 /*
-`import SteppedScene from './stepped';
+`
+
+import SteppedScene from './stepped';
 import trainBackground from "@assets/train-background.png";
 
-export default class TrainScene extends SteppedScene {
+export default class TrainExerciseScene extends SteppedScene {
   greenGraphics;
   redGraphics;
   blueGraphics;
@@ -59,14 +59,17 @@ export default class TrainScene extends SteppedScene {
   playerSize = 30;
   scoreScrollDirection;
 
+  adminMode;
+
   constructor() {
-    super({key: 'train-2'});
+    super({key: 'train-3'});
   }
 
   preload() {
     super.preload();
 
     this.load.image('train-background', trainBackground);
+
   }
 
   init(params) {
@@ -117,6 +120,10 @@ export default class TrainScene extends SteppedScene {
       .setDepth(-1)
       .setTint(0x02020, 0x000020, 0x002000, 0x202020)
       .setScrollFactor(0);
+
+      if (this.adminMode) {
+        this.deleteKey = this.input.keyboard.addKey('D'); 
+      }
 
     this.greenGraphics = this.add.graphics();
     this.redGraphics = this.add.graphics();
@@ -367,5 +374,6 @@ export default class TrainScene extends SteppedScene {
   }
 }
 
-const SECONDS_PER_SCREEN = 10;`
+const SECONDS_PER_SCREEN = 10;
+`
 */

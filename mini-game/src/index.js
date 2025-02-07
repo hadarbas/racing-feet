@@ -8,6 +8,8 @@ import TrainScene from './scenes/train';
 import RecorderScene from './scenes/recorder';
 import SelectCategoryScene from './scenes/select-category';
 import SelectExerciseScene from './scenes/select-exercise';
+import SelectRecordedExerciseScene from './scenes/select-recorded-exercise';
+import TrainExerciseScene from './scenes/train-exercise';
 
 const config = {
     type: Phaser.AUTO,
@@ -19,7 +21,7 @@ const config = {
     },
     scene: [MainMenuScene, SelectControllerScene, SetupScene,
         TrainScene, RecorderScene,
-        SelectCategoryScene, SelectExerciseScene],
+        SelectCategoryScene, SelectExerciseScene, SelectRecordedExerciseScene, TrainExerciseScene],
     plugins: {
         global: [{
             key: 'rexBBCodeTextPlugin',

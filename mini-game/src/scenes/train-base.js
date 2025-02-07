@@ -1,28 +1,7 @@
-
-import BaseTrainScene from './train-base';
-
-export default class TrainScene extends BaseTrainScene {
-  constructor() {
-    super({ key: 'train-2' });
-  }
-
-  create() {
-    super.create();
-    this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-
-    this.escapeKey.on('down', () => {
-        this.scene.start('train'); 
-    });
-}
-}
-
-
-
-/*
-`import SteppedScene from './stepped';
+import SteppedScene from './stepped';
 import trainBackground from "@assets/train-background.png";
 
-export default class TrainScene extends SteppedScene {
+export default class TrainExerciseScene extends SteppedScene {
   greenGraphics;
   redGraphics;
   blueGraphics;
@@ -59,14 +38,13 @@ export default class TrainScene extends SteppedScene {
   playerSize = 30;
   scoreScrollDirection;
 
-  constructor() {
-    super({key: 'train-2'});
-  }
+  adminMode;
 
   preload() {
     super.preload();
 
     this.load.image('train-background', trainBackground);
+
   }
 
   init(params) {
@@ -91,6 +69,9 @@ export default class TrainScene extends SteppedScene {
     this.distancesInOneCorner = []
     this.levelDifficulty = 0
     this.distanceBonus = 5
+
+    this.pointsCache = new Map(); 
+    this.lastHandleStepStartCall = 0;
   }
 
   process = (data, key) => data
@@ -107,16 +88,42 @@ export default class TrainScene extends SteppedScene {
     .map(({[key]: value}) => value)
   );
 
-  getPointsForKey = (data, key) =>
-    this.getMaxTime(data, key) ? this.process(data, key) : null;
+  getPointsForKey = (data, key) => {
+    if (!this.pointsCache) {
+        this.pointsCache = new Map(); 
+    }
+
+    const cacheKey = key + JSON.stringify(data);
+
+    if (this.pointsCache.has(cacheKey)) {
+        return this.pointsCache.get(cacheKey); 
+    }
+
+    if (!this.getMaxTime(data, key)) {
+        return null;
+    }
+
+    const processedData = this.process(data, key);
+    this.pointsCache.set(cacheKey, processedData); 
+
+    return processedData;
+};
+
+
 
   create() {
+
     super.create();
+
 
     this.add.image(...this.fit(this.baseWidth / 2, this.baseHeight / 2), 'train-background')
       .setDepth(-1)
       .setTint(0x02020, 0x000020, 0x002000, 0x202020)
       .setScrollFactor(0);
+
+      if (this.adminMode) {
+        this.deleteKey = this.input.keyboard.addKey('D'); 
+      }
 
     this.greenGraphics = this.add.graphics();
     this.redGraphics = this.add.graphics();
@@ -125,9 +132,9 @@ export default class TrainScene extends SteppedScene {
     this.redTrail = this.add.graphics();
     this.blueTrail = this.add.graphics();
 
-    this.drawCurve(this.greenGraphics, this.green, 0x00ff00, this.radius);
-    this.drawCurve(this.redGraphics, this.red, 0xff0000, this.radius);
-    this.drawCurve(this.blueGraphics, this.blue, 0x0000ff, this.radius);
+    this.drawStartCurve(this.greenGraphics, this.green, 0x00ff00, this.radius);
+    this.drawStartCurve(this.redGraphics, this.red, 0xff0000, this.radius);
+    this.drawStartCurve(this.blueGraphics, this.blue, 0x0000ff, this.radius);
 
     this.greenPlayer = this.add.ellipse(...this.fit(this.xPadding, this.yPadding + this.yHeight), this.playerSize, this.playerSize, 0x00ff00)
       .setStrokeStyle(this.playerSize * 0.2, 0x008000, 0.5);
@@ -137,6 +144,7 @@ export default class TrainScene extends SteppedScene {
       .setStrokeStyle(this.playerSize * 0.2, 0x000080, 0.5);
 
     this.prompt.setPosition(...this.fit(600, 950));
+
   }
 
   handleStep_init() {
@@ -147,6 +155,7 @@ export default class TrainScene extends SteppedScene {
   }
 
   handleStep_start({green, red}) {
+    
     if (green >= 1) {
       Object.entries({
         green: this.greenPlayer,
@@ -161,113 +170,105 @@ export default class TrainScene extends SteppedScene {
     if (red >= 1) {
       this.currentStep = 'over_release_2';
     }
+    /*
+//makni ovo!!!!!!!!!
+    setTimeout(() => {
+      this.currentStep = 'play';
+  }, 3000);
+  */
+
+
   }
 
-  handleStep_play({time, green, red, blue}) {
+  
+  handleStep_play({ time, green, red, blue }) {
+
+
+    this.greenTrail.clear();
+    this.redTrail.clear();
+    this.blueTrail.clear();
+
     if (time >= this.maxTime) {
-      this.currentStep = 'over_release_1';
-      this.scoreScrollDirection = -100;
-      return;
+        this.currentStep = 'over_release_1';
+        this.scoreScrollDirection = -100;
+        return;
     }
 
-    this.recording.push({time, green, red, blue});
+    this.recording.push({ time, green, red, blue });
 
-    const greenTrailPoints = this.getPointsForKey(this.recording, 'green');
-    const redTrailPoints = this.getPointsForKey(this.recording, 'red');
-    const blueTrailPoints = this.getPointsForKey(this.recording, 'blue');
+    // Iscrtavanje tragova
+    this.drawCurrCurve(this.greenTrail, this.getPointsForKey(this.recording, 'green'), 0x008000, this.radius * 0.05);
+    this.drawCurrCurve(this.redTrail, this.getPointsForKey(this.recording, 'red'), 0x800000, this.radius * 0.05);
+    this.drawCurrCurve(this.blueTrail, this.getPointsForKey(this.recording, 'blue'), 0x000080, this.radius * 0.05);
 
-    const trailWidth = this.radius * 0.05;
-    this.drawCurve(this.greenTrail, greenTrailPoints, 0x008000, trailWidth);
-    this.drawCurve(this.redTrail, redTrailPoints, 0x800000, trailWidth);
-    this.drawCurve(this.blueTrail, blueTrailPoints, 0x000080, trailWidth);
+    // Ažuriranje pozicije igrača
+    this.updatePlayerPosition(this.greenPlayer, time, green);
+    this.updatePlayerPosition(this.redPlayer, time, red);
+    this.updatePlayerPosition(this.bluePlayer, time, blue);
 
-    this.greenPlayer.setPosition(...this.fit(
-      this.xPadding + time / this.maxTime * this.xWidth,
-      this.yPadding + (1 - green) * this.yHeight
-    ));
-    this.redPlayer.setPosition(...this.fit(
-      this.xPadding + time / this.maxTime * this.xWidth,
-      this.yPadding + (1 - red) * this.yHeight
-    ));
-    this.bluePlayer.setPosition(...this.fit(
-      this.xPadding + time / this.maxTime * this.xWidth,
-      this.yPadding + (1 - blue) * this.yHeight
-    ));
+    // Skrolovanje kamere
+    this.cameras.main.scrollX = this.fit(time / this.maxTime * this.xWidth, 0)[0];
 
-    const [scrollX, _] = this.fit(time / this.maxTime * this.xWidth, 0);
-    this.cameras.main.scrollX = scrollX;
+    // Pronalaženje podataka za tekuće vreme
+    const { greenData, redData, blueData } = this.findDataForTime(time);
+    
+    this.handleCornerLogic(greenData, redData, green);
 
-    let greenData = 0;
-    let redData = 0;
-    let blueData = 0;
-    for (let i = 0; i < this.data.length; i++) {
-      const p1 = this.data[i];
-      if (p1.time >= time) {
-        greenData = p1.green;
-        redData = p1.red;
-        blueData = p1.blue;
-        break;
-      }
+    // Ažuriranje boja igrača
+    this.updatePlayerColor(this.greenPlayer, green, greenData, 0x00ff00);
+    this.updatePlayerColor(this.redPlayer, red, redData, 0xff0000);
+    this.updatePlayerColor(this.bluePlayer, blue, blueData, 0x0000ff);
+}
+
+// Funkcija za ažuriranje pozicije igrača
+updatePlayerPosition(player, time, value) {
+    player.setPosition(
+        ...this.fit(
+            this.xPadding + (time / this.maxTime) * this.xWidth,
+            this.yPadding + (1 - value) * this.yHeight
+        )
+    );
+}
+
+// Funkcija za pronalaženje podataka za određeno vreme
+findDataForTime(time) {
+    for (let point of this.data) {
+        if (point.time >= time) {
+            return { greenData: point.green, redData: point.red, blueData: point.blue };
+        }
     }
+    return { greenData: 0, redData: 0, blueData: 0 };
+}
 
-    const greenDist = Math.abs(green - greenData);
-    const redDist = Math.abs(red - redData);
-    const blueDist = Math.abs(blue - blueData);
+// Funkcija za ažuriranje boje igrača
+updatePlayerColor(player, value, dataValue, color) {
+    const dist = Math.abs(value - dataValue);
+    player.setFillStyle(color, dataValue > 0 && dist < 0.2 ? 1 - dist : 0.2);
+}
 
-    if (greenData < 1 || redData > 0){
-      this.corner = true
-    } else if (greenData == 1 && redData == 0){
-      
-      if (this.corner){
-        this.cornerEnd = true
-
-        let sum = this.distancesInOneCorner.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-        this.scorePerCorner.push(100 - (sum / this.distancesInOneCorner.length * 100) + this.distanceBonus + this.levelDifficulty)
-        this.distancesInOneCorner = []
-
-        this.currentScore = Math.round(this.scorePerCorner.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / this.scorePerCorner.length);
-      } else {
-        this.cornerEnd = false
-      }
-      
-      this.corner = false
+// Funkcija za upravljanje logikom krivine
+handleCornerLogic(greenData, redData, green) {
+    if (greenData < 1 || redData > 0) {
+        this.corner = true;
+    } else if (greenData === 1 && redData === 0) {
+        if (this.corner) {
+            this.cornerEnd = true;
+            const sum = this.distancesInOneCorner.reduce((acc, val) => acc + val, 0);
+            this.scorePerCorner.push(100 - (sum / this.distancesInOneCorner.length * 100) + this.distanceBonus + this.levelDifficulty);
+            this.distancesInOneCorner = [];
+            this.currentScore = Math.round(this.scorePerCorner.reduce((acc, val) => acc + val, 0) / this.scorePerCorner.length);
+        } else {
+            this.cornerEnd = false;
+        }
+        this.corner = false;
     }
 
     if (this.corner) {
-      if (greenData > 0){
-      this.distancesInOneCorner.push(greenDist)
-      }
-
-      if (redData > 0){
-      this.distancesInOneCorner.push(redDist)
+        if (greenData > 0) this.distancesInOneCorner.push(Math.abs(green - greenData));
+        if (redData > 0) this.distancesInOneCorner.push(Math.abs(redData));
     }
-  }
-    
+}
 
-    if (greenDist < 0.2 && greenData > 0) {
-      this.greenPlayer.setStrokeStyle()
-        .setFillStyle(0x00ff00, 1 - greenDist);
-    } else {
-      this.greenPlayer.setStrokeStyle()
-        .setFillStyle(0x00ff00, 0.2);
-    }{}
-
-    if (redDist < 0.2 && redData > 0) {
-      this.redPlayer
-        .setFillStyle(0xff0000, 1 - redDist);
-    } else {
-      this.redPlayer
-      .setFillStyle(0xff0000, 0.2);
-    }
-
-    if (blueDist < 0.2 && blueData > 0) {
-      this.bluePlayer
-        .setFillStyle(0x0000ff, 1 - blueDist);
-    } else {
-      this.bluePlayer
-        .setFillStyle(0x0000ff, 0.2);
-    }
-  }
 
   handleStep_over_release_1(pedals) {
     super.handleStepRelease(pedals, 'over_menu');
@@ -328,7 +329,7 @@ export default class TrainScene extends SteppedScene {
     return {green: 0, red: 0, belu: 0};
   }
 
-  drawCurve(graphics, points, color, radius) {
+  drawStartCurve(graphics, points, color, radius) {
     if (!points) {
       return;
     }
@@ -357,6 +358,20 @@ export default class TrainScene extends SteppedScene {
     graphics.setMask(mask);
   }
 
+  drawCurrCurve(graphics, points, color, radius) {
+    if (!points) return;
+
+    const visiblePoints = points.filter(p => p[0] > this.cameras.main.scrollX - 100 && p[0] < this.cameras.main.scrollX + this.cameras.main.width + 100);
+    if (visiblePoints.length === 0) return;
+
+    graphics.clear();
+    graphics.lineStyle(radius * 2, color);
+    for (let i = 1; i < visiblePoints.length; i++) {
+        graphics.lineBetween(visiblePoints[i - 1][0], visiblePoints[i - 1][1], visiblePoints[i][0], visiblePoints[i][1]);
+    }
+}
+
+
   score;
   get currentScore() {
     return this.score;
@@ -367,5 +382,4 @@ export default class TrainScene extends SteppedScene {
   }
 }
 
-const SECONDS_PER_SCREEN = 10;`
-*/
+const SECONDS_PER_SCREEN = 10;

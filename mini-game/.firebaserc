@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "racing-feet"
-  }
+    "default": "racing-feet",
+    "staging": "racing-feet"
+  },
+  "targets": {},
+  "etags": {}
 }

@@ -1,5 +1,5 @@
 import MenuScene from "./menu";
-import {getDocuments, deleteDocument} from "shared/services/firebase/db";
+import {getDocument, getDocuments, deleteDocument} from "shared/services/firebase/db";
 
 export default class SelectExerciseScene extends MenuScene {
   execises;
@@ -7,7 +7,7 @@ export default class SelectExerciseScene extends MenuScene {
   selectedCategory;
 
   constructor() {
-    super([], 'select-exercise');
+    super([], 'train');
   }
 
   create() {
@@ -23,48 +23,60 @@ export default class SelectExerciseScene extends MenuScene {
       this.container = null;
       this.items = [];
       this.itemHeight = 0;
-    this.selectedCategory = params.category;
-    this.loadExercises();
+    const name = localStorage.getItem("name") || null
+    this.loadLevels(name);
   }
 
   update() {
     super.update();
-
-    if (this.selectedCategory) {
-      this.setPrompt(`Category [b]${this.selectedCategory}[/b]`);
-    }
-
-    if (this.selectedCategory && this.deleteKey.isDown) {
-      const name = this.items[this.activeItemIndex];
-      if (confirm(`Are you sure you want to delete "${name}"?`)) {
-        deleteDocument(...this.path, name).then(() => {
-          this.scene.restart();
-        });
-      }
-    }
   } 
 
-  get path() {
-    return this.selectedCategory
-      ? ['category', this.selectedCategory, 'exercise']
-      : ['exercise'];
+  async loadLevels(name) {
+    try {
+      const levelsSnapshot = await getDocuments("user_levels");
+  
+      const levels = levelsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() })) 
+        .filter(level => level.user === name);
+
+        this.categories = levels.map(level => level.level);
+
+        this.items = [...this.categories];
+        
+       this.createItems(32);
+     
+       this.time.delayedCall(50, () => {
+         this.cameras.main.setVisible(true); 
+       });
+
+    } catch (error) {
+      console.error("  Greška pri učitavanju levela:", error);
+      return [];
+    }
   }
 
-  async loadExercises() {
-    const list = await getDocuments(...this.path);
-    this.execises = Object.fromEntries(
-      list
-        .docs
-        .map(doc => [
-          doc.id,
-          doc.data().data,
-        ])
-    );
-    this.items = Object.keys(this.execises);
-    this.createItems(24);
-  }
 
-  handleItemClick(name) {
-    this.scene.start('train-2', {name, data: this.execises[name]});
+  async handleItemClick(name) {
+      try {
+          console.log(`🔍 Dohvatam level '${name}'...`);
+
+          const levelDoc = await getDocument("levels", name);
+  
+          if (!levelDoc.exists()) {
+              console.error(`  Level '${name}' ne postoji!`);
+              alert(`  Level '${name}' nije pronađen.`);
+              return;
+          }
+
+          const levelData = levelDoc.data();
+          console.log(`  Level '${name}' pronađen:`, levelData);
+  
+          this.scene.start('train-2', { name, data: levelData.data });
+  
+      } catch (error) {
+          console.error("  Greška pri dohvaćanju levela:", error);
+          alert("Check console for error.");
+      }
   }
+  
 }

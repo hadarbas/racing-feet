@@ -3,7 +3,7 @@ import {getDocuments} from "shared/services/firebase/db";
 
 export default class SelectCategoryScene extends MenuScene {
   constructor() {
-    super([], 'train');
+    super([], 'pfff');
   }
 
   create() {
@@ -22,23 +22,33 @@ export default class SelectCategoryScene extends MenuScene {
       this.itemHeight = 0;
     
     this.cameras.main.setVisible(false); // Sakrij scenu dok se ne učitaju kategorije
-    this.loadCategories();
+    const name = localStorage.getItem("name") || null
+    this.loadLevels(name);
   }
   
-  async loadCategories() {
-    const list = await getDocuments('category');
-    this.categories = list.docs.map(doc => doc.id);
-    this.items = [
-      this.LEGACY_CATEGORY,
-      ...this.categories,
-    ];
-    this.createItems(32);
+  async loadLevels(name) {
+    try {
+      const levelsSnapshot = await getDocuments("user_levels");
   
-    this.time.delayedCall(50, () => {
-      this.cameras.main.setVisible(true); // Prikaži scenu nakon kašnjenja
-    });
+      const levels = levelsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() })) 
+        .filter(level => level.user === name);
+
+        this.categories = levels.map(level => level.level);
+
+        this.items = [...this.categories];
+        
+       this.createItems(32);
+     
+       this.time.delayedCall(50, () => {
+         this.cameras.main.setVisible(true); 
+       });
+
+    } catch (error) {
+      console.error("  Greška pri učitavanju levela:", error);
+      return [];
+    }
   }
-    
 
   update() {
     super.update();
@@ -54,3 +64,20 @@ export default class SelectCategoryScene extends MenuScene {
     });
   }
 }
+
+
+
+  /*async loadCategories() {
+    const list = await getDocuments('category');
+    this.categories = list.docs.map(doc => doc.id);
+    this.items = [
+      this.LEGACY_CATEGORY,
+      ...this.categories,
+    ];
+    this.createItems(32);
+  
+    this.time.delayedCall(50, () => {
+      this.cameras.main.setVisible(true); // Prikaži scenu nakon kašnjenja
+    });
+  }
+    */
