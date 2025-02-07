@@ -11,7 +11,7 @@ import JsonView from 'react-json-view';
 import {JSONEditor} from 'react-json-editor-viewer';
 import Button from '@mui/joy/Button';
 
-import { setDocument, serverTimestamp } from 'shared/services/firebase/db';
+import { setDocument, serverTimestamp, getDocuments } from 'shared/services/firebase/db';
 import '../../buffer';
 import 'react-virtualized/styles.css'; // only needs to be imported once
 
@@ -73,28 +73,60 @@ function Import() {
   }, [samples]);
   const columnMinWidth = 100;
   const [isSaving, setIsSaving] = useState(false); // Add isSaving state
-  const handleUpload = useCallback(async () => {
-    setIsSaving(true); // Set isSaving to true
-    try {
-      const minTime = parseFloat(samples[0].SessionTime);
-      const data = samples.map(({
-        SessionTime, Brake, Throttle, SteeringWheelAngle
-      }) => ({
-        time: parseFloat(SessionTime) - minTime,
-        red: parseFloat(Brake),
-        green: parseFloat(Throttle),
-        blue: parseFloat(SteeringWheelAngle),
-      }));
-      await setDocument({timeLastUpdated: serverTimestamp()}, 'category', meta.category);
-      await setDocument({data}, 'category', meta.category, 'exercise', meta.name);
 
-      alert(`Successfully uploaded exercise ${meta.name} in ${meta.category}`);
+  const handleUpload = useCallback(async () => {
+    setIsSaving(true);
+    try {
+        if (!samples.length) {
+            alert("No data to upload!");
+            setIsSaving(false);
+            return;
+        }
+
+        const minTime = parseFloat(samples[0].SessionTime);
+        const data = samples.map(({ SessionTime, Brake, Throttle, SteeringWheelAngle }) => ({
+            time: parseFloat(SessionTime) - minTime,
+            red: parseFloat(Brake),
+            green: parseFloat(Throttle),
+            blue: parseFloat(SteeringWheelAngle),
+        }));
+
+        const levelsSnapshot = await getDocuments("levels");
+        const levels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        let orderId = 1;
+        const existingLevel = levels.find(level => level.id === meta.name);
+
+        if (existingLevel) {
+            orderId = existingLevel.order_id || 1; 
+        } else {
+            const maxOrderId = levels.reduce((max, level) => level.order_id > max ? level.order_id : max, 0);
+            orderId = maxOrderId + 1; 
+        }
+
+        await setDocument({ name: meta.name, difficulty: meta.difficulty, order_id: orderId, data }, "levels", meta.name);
+        console.log(`Level '${meta.name}' uploaded successfully with order_id: ${orderId}`);
+
+        const usersSnapshot = await getDocuments("users");
+        const users = usersSnapshot.docs.map(doc => doc.id); 
+
+        const userLevelPromises = users.map(user => 
+            setDocument({ user, level: meta.name, score: 0 }, "user_levels", `${user}_${meta.name}`)
+        );
+
+        await Promise.all(userLevelPromises); 
+
+        alert(`Level '${meta.name}' uploaded and assigned to all users.`);
     } catch (error) {
-      console.error(error);
+        console.error("  Error uploading level or assigning users:", error);
+        alert("Failed to upload level and assign users.");
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  }, [meta]);
+}, [meta, samples]);
+
+
+  
   const handleJsonChange = useCallback((key, value, parent, data) => {
     setMeta({
       ...data,
@@ -193,11 +225,31 @@ function Import() {
             </Table>
       )}</AutoSizer>}
       <SnapRight>
-        <JSONEditor
-          data={meta}
-          onChange={handleJsonChange}
-        />
-      </SnapRight>
+  {samples.length > 0 && ( // Prikazujemo samo ako grafikon postoji
+    <div>
+      {/* Level Name Input */}
+      <label htmlFor="levelName">Level name:</label>
+      <input
+        type="text"
+        id="levelName"
+        value={meta.name || ""}
+        onChange={(e) => handleJsonChange("name", e.target.value, null, meta)}
+      />
+      <br/>
+      {/* Level Difficulty Dropdown */}
+      <label htmlFor="levelDifficulty">Level difficulty:</label>
+      <select
+        id="levelDifficulty"
+        value={meta.difficulty || "easy"}
+        onChange={(e) => handleJsonChange("difficulty", e.target.value, null, meta)}
+      >
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </div>
+  )}
+</SnapRight>
     </RowPane>
   </RootContainer>);
 }

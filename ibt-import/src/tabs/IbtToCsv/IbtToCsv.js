@@ -102,7 +102,6 @@ function IbtToCsv() {
           clearInterval(intervalId);
 
           records.push(""); // Add an empty line at the end of the CSV
-          records.push("category=Default"); // Add the category metadata to the CSV
           records.push(`name=${fileName}`); // Add the exercise metadata to the CSV
 
           const encodedUri = encodeURI("data:text/csv;charset=utf-8," + records.join("\n"));
