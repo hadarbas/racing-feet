@@ -1,0 +1,16 @@
+{
+  "projects": {},
+  "targets": {
+    "racing-feet": {
+      "hosting": {
+        "app-v1": [
+          "racing-feet"
+        ],
+        "app-v2": [
+          "ibt-import"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

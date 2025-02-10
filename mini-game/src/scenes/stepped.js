@@ -13,15 +13,15 @@ export default class SteppedScene extends PedalsScene {
 
     const method = `handleStep_${this.currentStep}`;
     if (!(method in this)) {
-      throw new Error(`cannot handle step ${this.currentStep}`);
+        throw new Error(`cannot handle step ${this.currentStep}`);
     }
 
     this[method]({
-      time: this.currentTime,
-      ...this.currentPedals,
+        time: this.currentTime,
+        ...this.currentPedals,
     });
     this.currentTime += delta / 1000;
-  }
+}
 
   handleStep_init() {
     this.currentStep = 'start';

@@ -3,7 +3,7 @@ import {setDocument} from 'shared/services/firebase/db';
 
 export default class RecorderScene extends SteppedScene {
   recording;
-  maxTime = 500;
+  maxTime = 5000;
   graphics;
 
   constructor() {
@@ -54,7 +54,7 @@ export default class RecorderScene extends SteppedScene {
     });
     this.updateCurve();
 
-    if (!(green > 0.6 || red > 0.6 || blue > 0.6)) {
+    if (!(green > 0.01 || red > 0.01 || blue > 0.01)) {
       if (!this.timeLastRelease) {
         this.timeLastRelease = time;
       } else if (time - this.timeLastRelease >= 3) {
