@@ -1,15 +1,14 @@
 {
-    "hosting": [
-      {
-        "target": "app-v1",
-        "public": "mini-game/dist",
-        "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
-      },
-      {
-        "target": "app-v2",
-        "public": "ibt-import/dist",
-        "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
-      }
-    ]
-  }
-  
+  "hosting": [
+    {
+      "target": "app-v1",
+      "public": "mini-game/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    },
+    {
+      "target": "app-v2",
+      "public": "ibt-import/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    }
+  ]
+}

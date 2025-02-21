@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "ibt-import"
-  }
+    "default": "ibt-import",
+    "staging": "racing-feet-ibt-import"
+  },
+  "targets": {},
+  "etags": {}
 }
