@@ -10,9 +10,11 @@ import SelectCategoryScene from './scenes/select-category';
 import SelectExerciseScene from './scenes/select-exercise';
 import SelectRecordedExerciseScene from './scenes/select-recorded-exercise';
 import TrainExerciseScene from './scenes/train-exercise';
+import HighScore from './scenes/high-score';
+import HighScoreLevel from './scenes/high-score-level';
 
 const config = {
-    type: Phaser.AUTO,
+    type: Phaser.WEBGL,
     parent: 'phaser-example',
     width: window.innerWidth,
     height: Math.round(window.innerWidth * 9 / 16),
@@ -21,7 +23,7 @@ const config = {
     },
     scene: [MainMenuScene, SelectControllerScene, SetupScene,
         TrainScene, RecorderScene,
-        SelectCategoryScene, SelectExerciseScene, SelectRecordedExerciseScene, TrainExerciseScene],
+        SelectCategoryScene, SelectExerciseScene, SelectRecordedExerciseScene, TrainExerciseScene, HighScore, HighScoreLevel],
     plugins: {
         global: [{
             key: 'rexBBCodeTextPlugin',

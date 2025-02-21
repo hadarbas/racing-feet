@@ -7,7 +7,7 @@ export default class MainMenuScene extends MenuScene {
   constructor() {
     const playerName = localStorage.getItem("name") || null;
   
-    const menuOptions = ['Train', 'Recorded exercises', 'Setup'];
+    const menuOptions = ['Train', 'Recorded exercises', 'High score','Setup'];
 
     if (playerName === "admin") {
         menuOptions.splice(1, 0, "Record a new exercise"); 
@@ -66,7 +66,6 @@ async create() {
       }
   }, 500);
 }
-
 
 
 
