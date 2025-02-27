@@ -61,7 +61,7 @@ function Import() {
       const columns = header.map(name => ({name, label: makeLabel(name)}));
       setColumns(columns);
       setSamples(records);
-      setFileName(file.name); // Set the file name in the state variable
+      setFileName(file.name); 
     } catch (error) {
       console.error(error);
     } finally {
@@ -72,57 +72,66 @@ function Import() {
     return samples[index];
   }, [samples]);
   const columnMinWidth = 100;
-  const [isSaving, setIsSaving] = useState(false); // Add isSaving state
+  const [isSaving, setIsSaving] = useState(false); 
 
   const handleUpload = useCallback(async () => {
     setIsSaving(true);
     try {
-        if (!samples.length) {
-            alert("No data to upload!");
-            setIsSaving(false);
-            return;
-        }
-
-        const minTime = parseFloat(samples[0].SessionTime);
-        const data = samples.map(({ SessionTime, Brake, Throttle, SteeringWheelAngle }) => ({
-            time: parseFloat(SessionTime) - minTime,
-            red: parseFloat(Brake),
-            green: parseFloat(Throttle),
-            blue: parseFloat(SteeringWheelAngle),
-        }));
-
-        const levelsSnapshot = await getDocuments("levels");
-        const levels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        let orderId = 1;
-        const existingLevel = levels.find(level => level.id === meta.name);
-
-        if (existingLevel) {
-            orderId = existingLevel.order_id || 1; 
-        } else {
-            const maxOrderId = levels.reduce((max, level) => level.order_id > max ? level.order_id : max, 0);
-            orderId = maxOrderId + 1; 
-        }
-
-        await setDocument({ name: meta.name, difficulty: meta.difficulty, order_id: orderId, data }, "levels", meta.name);
-        console.log(`Level '${meta.name}' uploaded successfully with order_id: ${orderId}`);
-
-        const usersSnapshot = await getDocuments("users");
-        const users = usersSnapshot.docs.map(doc => doc.id); 
-
-        const userLevelPromises = users.map(user => 
-            setDocument({ user, level: meta.name, score: 0 }, "user_levels", `${user}_${meta.name}`)
-        );
-
-        await Promise.all(userLevelPromises); 
-
-        alert(`Level '${meta.name}' uploaded and assigned to all users.`);
-    } catch (error) {
-        console.error("  Error uploading level or assigning users:", error);
-        alert("Failed to upload level and assign users.");
-    } finally {
-        setIsSaving(false);
-    }
+      if (!samples.length) {
+          alert("No data to upload!");
+          setIsSaving(false);
+          return;
+      }
+  
+      const minTime = parseFloat(samples[0].SessionTime);
+      const data = samples.map(({ SessionTime, Brake, Throttle, SteeringWheelAngle }) => ({
+          time: parseFloat(SessionTime) - minTime,
+          red: parseFloat(Brake),
+          green: parseFloat(Throttle),
+          blue: parseFloat(SteeringWheelAngle),
+      }));
+  
+      const levelsSnapshot = await getDocuments("levels");
+      const existingOrderIds = levelsSnapshot.docs.map(doc => doc.data().order_id);
+  
+      if (existingOrderIds.includes(meta.orderId)) {
+          alert(`Order ID ${meta.orderId} already exists`);
+          return
+      }
+  
+      await setDocument(
+          { 
+              name: meta.name, 
+              difficulty: meta.difficulty, 
+              order_id: meta.orderId, 
+              instructions: meta.instructions, 
+              folderTag: meta.folderTag, 
+              lock: meta.lock,  
+              data 
+          }, 
+          "levels", 
+          meta.name
+      );
+  
+      console.log(`Level '${meta.name}' uploaded successfully with order_id: ${meta.orderId}`);
+  
+      const usersSnapshot = await getDocuments("users");
+      const users = usersSnapshot.docs.map(doc => doc.id); 
+  
+      const userLevelPromises = users.map(user => 
+          setDocument({ user, level: meta.name, score: 0 }, "user_levels", `${user}_${meta.name}`)
+      );
+  
+      await Promise.all(userLevelPromises); 
+  
+      alert(`Level '${meta.name}' uploaded and assigned to all users.`);
+  } catch (error) {
+      console.error("Error uploading level or assigning users:", error);
+      alert(error.message || "Failed to upload level and assign users.");
+  } finally {
+      setIsSaving(false);
+  }
+  
 }, [meta, samples]);
 
 
@@ -227,27 +236,84 @@ function Import() {
       <SnapRight>
   {samples.length > 0 && ( // Prikazujemo samo ako grafikon postoji
     <div>
-      {/* Level Name Input */}
-      <label htmlFor="levelName">Level name:</label>
-      <input
-        type="text"
-        id="levelName"
-        value={meta.name || ""}
-        onChange={(e) => handleJsonChange("name", e.target.value, null, meta)}
-      />
-      <br/>
-      {/* Level Difficulty Dropdown */}
-      <label htmlFor="levelDifficulty">Level difficulty:</label>
-      <select
-        id="levelDifficulty"
-        value={meta.difficulty || "easy"}
-        onChange={(e) => handleJsonChange("difficulty", e.target.value, null, meta)}
-      >
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
-      </select>
-    </div>
+    {/* Level Name Input */}
+    <label htmlFor="levelName">Level name:</label>
+    <input
+      type="text"
+      id="levelName"
+      value={meta.name || ""}
+      onChange={(e) => handleJsonChange("name", e.target.value, null, meta)}
+    />
+    <br/>
+  
+    {/* Level Difficulty Dropdown */}
+    <label htmlFor="levelDifficulty">Level difficulty:</label>
+    <select
+  id="levelDifficulty"
+  value={meta.difficulty || ""} 
+  onChange={(e) => handleJsonChange("difficulty", e.target.value, null, meta)}
+>
+  <option value="" disabled hidden>Select difficulty</option>
+  <option value="easy">Easy</option>
+  <option value="medium">Medium</option>
+  <option value="hard">Hard</option>
+  <option value="challenge">Challenge</option>
+</select>
+<br/>
+
+  
+    {/* Order ID Input (only integers > 0) */}
+<label htmlFor="orderId">Order ID:</label>
+<input
+  type="number"
+  id="orderId"
+  min="1" // Ensures only positive numbers
+  step="1" // Ensures only whole numbers
+  value={meta.orderId ?? ""} // ✅ Ispravljeno
+  onChange={(e) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value > 0) {
+      handleJsonChange("orderId", value, null, meta);
+    }
+  }}
+/>
+    <br/>
+  
+    {/* Level Instructions (Textarea) */}
+    <label htmlFor="levelInstructions">Level instructions:</label>
+    <textarea
+      id="levelInstructions"
+      value={meta.instructions || ""}
+      onChange={(e) => handleJsonChange("instructions", e.target.value, null, meta)}
+    />
+    <br/>
+  
+    {/* Folder Tag Input */}
+    <label htmlFor="folderTag">Folder tag:</label>
+    <input
+      type="text"
+      id="folderTag"
+      value={meta.folderTag || ""}
+      onChange={(e) => handleJsonChange("folderTag", e.target.value, null, meta)}
+    />
+    <br/>
+  
+{/* Lock Dropdown */}
+<label htmlFor="lock">Lock:</label>
+<select
+  id="lock"
+  value={meta.lock ?? ""} 
+  onChange={(e) => handleJsonChange("lock", e.target.value === "true", null, meta)}
+>
+  <option value="" disabled hidden>Select Lock Status</option>
+  <option value="true">True</option>
+  <option value="false">False</option>
+</select>
+<br/>
+
+
+  </div>
+  
   )}
 </SnapRight>
     </RowPane>

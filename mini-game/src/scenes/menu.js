@@ -85,64 +85,57 @@ createItems(fontSize) {
   this.container = tempContainer.setVisible(true);
 }
 
-  update() {
-    super.update();
+update() {
+  super.update();
 
-    if (!this.items.length) {
+  if (!this.items.length) {
       return;
-    }
+  }
 
-    const {gas, brake, wheel} = this.getPedals();
+  const { gas, brake, wheel } = this.getPedals();
 
-    if (this.waitingForPedal &&
-      gas < 0.2 &&
-      brake < 0.2) {
+  if (this.waitingForPedal && gas < 0.2 && brake < 0.2 && !this.itemClicked) {
       this.setPrompt(this.waitingForPedal);
       if (this.waitingForPedal === "gas") {
-        this.handleItemClick(this.items[this.activeItemIndex]);
+          this.handleItemClick(this.items[this.activeItemIndex]);
       } else {
-        this.scene.start('main-menu');
+          this.scene.start('main-menu');
       }
       this.waitingForPedal = null;
-    } else if (this.enterKey.isDown) {
+      this.itemClicked = true; 
+  } else if (Phaser.Input.Keyboard.JustDown(this.enterKey)) { 
       this.setPrompt('');
       this.handleItemClick(this.items[this.activeItemIndex]);
-    } else if (brake >= this.pedals?.brake?.threshold) {
+  } else if (brake >= this.pedals?.brake?.threshold) {
       this.waitingForPedal = 'brake';
       this.setPrompt('Please [b]release all[/b] pedals');
-    } else if (gas >= this.pedals?.gas?.threshold) {
+  } else if (gas >= this.pedals?.gas?.threshold) {
       this.waitingForPedal = 'gas';
       this.setPrompt('Please [b]release all[/b] pedals');
-    }
- 
-    const now = Date.now();
+  }
 
-    const up = this.cursors.up.isDown /*|| wheel < -0.075;*/
-    const down = this.cursors.down.isDown /*|| wheel > 0.075;*/
+  const now = Date.now();
 
-    if (!(up || down)) {
+  const up = this.cursors.up.isDown;
+  const down = this.cursors.down.isDown;
+
+  if (!(up || down)) {
       this.timeLastChange = 0;
-    } else if (now - this.timeLastChange > 1500) {
-      this
-        .container
-        .list
-        .forEach(item => item.setStyle(this.itemStyle));
+  } else if (now - this.timeLastChange > 1500) {
+      this.container.list.forEach(item => item.setStyle(this.itemStyle));
 
       if (up) {
-        this.activeItemIndex = this.activeItemIndex
-          ? this.activeItemIndex - 1
-          : this.items.length - 1;
-        this.timeLastChange = now;
+          this.activeItemIndex = this.activeItemIndex ? this.activeItemIndex - 1 : this.items.length - 1;
+          this.timeLastChange = now;
       } else if (down) {
-        this.activeItemIndex = this.activeItemIndex < this.items.length - 1
-          ? this.activeItemIndex + 1
-          : 0;
-        this.timeLastChange = now;
+          this.activeItemIndex = this.activeItemIndex < this.items.length - 1 ? this.activeItemIndex + 1 : 0;
+          this.timeLastChange = now;
       }
 
       this.container.list[this.activeItemIndex].setStyle(this.activeItemStyle);
-    }
   }
+}
+
 
   handleItemClick(item) {
     console.debug('MenuScene.handleItemClick', item);

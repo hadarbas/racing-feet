@@ -81,29 +81,44 @@ export default class SelectExerciseScene extends MenuScene {
 
   async loadLevels(name) {
     try {
-      
-        const levelsSnapshot = await getDocuments("user_levels");
+        const userLevelsSnapshot = await getDocuments("user_levels");
+        const levelsSnapshot = await getDocuments("levels");
 
-        const levels = levelsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() })) 
+        const userLevels = userLevelsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(level => level.user === name);
 
-        if (this.adminMode){
-        this.items = levels.map(level => `${level.level} - Score: ${level.score}`)
-        } else {
-          const highScores = levels.filter(level => level.score >= MIN_POINTS_TO_PASS)
-          .map(level => `${level.level} - Score: ${level.score}`);
+        const levels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      const firstLowScore = levels.find(level => level.score < MIN_POINTS_TO_PASS);
-      if (firstLowScore) {
-          highScores.push(`${firstLowScore.level} - Score: ${firstLowScore.score}`);
-      }
+        const levelsWithOrder = userLevels.map(userLevel => {
+            const levelData = levels.find(level => level.id === userLevel.level);
+            return {
+                ...userLevel,
+                order_id: levelData ? parseInt(levelData.order_id, 10) || Infinity : Infinity,
+                lock: levelData ? levelData.lock : false
+            };
+        }).sort((a, b) => a.order_id - b.order_id);
 
-      this.items = highScores;
-        }
-        
+        let filteredLevels = [];
+        let firstLockedLowScoreAdded = false;
+
+        levelsWithOrder.forEach(level => {
+            if (level.lock === false) {
+                filteredLevels.push(`${level.level} - Score: ${level.score}`);
+            } else if (level.score >= 85 || (!firstLockedLowScoreAdded && level.score < 85)) {
+                filteredLevels.push(`${level.level} - Score: ${level.score}`);
+                if (level.score < 85){
+                firstLockedLowScoreAdded = true;
+            }
+          }
+        });
+
+        this.items = this.adminMode 
+            ? levelsWithOrder.map(level => `${level.level} - Score: ${level.score}`) 
+            : filteredLevels;
+
         this.createItems(32);
-     
+
         this.time.delayedCall(50, () => {
             this.cameras.main.setVisible(true); 
         });
@@ -113,6 +128,8 @@ export default class SelectExerciseScene extends MenuScene {
         return [];
     }
 }
+
+
 
 
 

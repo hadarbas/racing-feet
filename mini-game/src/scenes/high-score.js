@@ -32,14 +32,14 @@ export default class HighScore extends MenuScene {
 
   async loadLevels() {
     try {
-      
         const levelsSnapshot = await getDocuments("levels");
 
         const levels = levelsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() })) 
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => (a.order_id ?? Infinity) - (b.order_id ?? Infinity)); // 📌 Sortiranje po order_id
 
-        this.items = levels.map(level => `${level.id}`)
-        
+        this.items = levels.map(level => `${level.id}`);
+
         this.createItems(32);
      
         this.time.delayedCall(50, () => {
@@ -51,6 +51,7 @@ export default class HighScore extends MenuScene {
         return [];
     }
 }
+
 
 
 
