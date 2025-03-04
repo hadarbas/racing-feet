@@ -124,7 +124,36 @@ export default class PedalsScene extends ResponsiveScene {
       pad.axes[index].value : pad.buttons[index].value;
 
     return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-  } 
+  } else if (info.padId == "HE SIM PEDALS (Vendor: 10c4, Product: 8b02)") {
+    const { padId, type, index, min, max } = info;
+
+    const pad = this.padById(padId);
+    if (!pad) {
+      return 0;
+    }
+
+    const value = type === 'axis' ? pad.axes[index].value : pad.buttons[index].value;
+
+    if (index === 1 || index === 2) {
+      return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
+    }
+
+    return Math.min(1, Math.max(0, (value - min) / (max - min)));
+} else if (info.padId == "Simucube 2 Pro (Vendor: 16d0)") {
+  const { padId, type, index, min, max } = info;
+
+  const pad = this.padById(padId);
+  if (!pad) {
+    return 0;
+  }
+
+  if (index === 0) {
+    const value = pad.axes[index].value;
+    const normalizedValue = (value + 1) / 2;
+
+    return Math.min(1, Math.max(0, normalizedValue)); 
+      }
+    }
   }
 
   getPedals() {
@@ -173,3 +202,5 @@ export default class PedalsScene extends ResponsiveScene {
     `[b]${this.textForColor(value, color)}[/b]` :
     this.textForColor(value, color);
 }
+
+
