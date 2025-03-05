@@ -63,7 +63,6 @@ export default class PedalsScene extends ResponsiveScene {
     return null;
   }
   
-  
   update() {
     super.update();
     this.updatePedals();
@@ -96,6 +95,7 @@ export default class PedalsScene extends ResponsiveScene {
   }
 
   getValue(info) {
+
     if (!info || !this.pedals || info.index === null) {
       return 0;
     }
@@ -104,6 +104,7 @@ export default class PedalsScene extends ResponsiveScene {
     const {padId, type, index, min, max} = info;
     
     const pad = this.padById(padId);
+    console.log("G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)" , pad)
     if (!pad) {
       return 0;
     }
@@ -115,7 +116,9 @@ export default class PedalsScene extends ResponsiveScene {
   } else if (info.padId == "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
     const {padId, type, index, min, max} = info;
     
+    
     const pad = this.padById(padId);
+    console.log('G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)' , pad)
     if (!pad) {
       return 0;
     }
@@ -124,10 +127,11 @@ export default class PedalsScene extends ResponsiveScene {
       pad.axes[index].value : pad.buttons[index].value;
 
     return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-  } else if (info.padId == "HE SIM PEDALS (Vendor: 10c4, Product: 8b02)") {
+  } else if (info.padId == "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
     const { padId, type, index, min, max } = info;
 
     const pad = this.padById(padId);
+    console.log('HE SIM PEDALS connected' , pad)
     if (!pad) {
       return 0;
     }
@@ -139,10 +143,12 @@ export default class PedalsScene extends ResponsiveScene {
     }
 
     return Math.min(1, Math.max(0, (value - min) / (max - min)));
-} else if (info.padId == "Simucube 2 Pro (Vendor: 16d0)") {
+} else if (info.padId == "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
   const { padId, type, index, min, max } = info;
 
   const pad = this.padById(padId);
+  console.log("Simucube 2 Pro (Vendor: 16d0 Product: 0d60)", pad)
+
   if (!pad) {
     return 0;
   }
@@ -153,9 +159,9 @@ export default class PedalsScene extends ResponsiveScene {
 
     return Math.min(1, Math.max(0, normalizedValue)); 
       }
-    }
+    } 
   }
-
+  
   getPedals() {
     const wheelPad = this.padById(this.pedals?.wheel?.padId);
     const wheelInput = wheelPad ?
