@@ -7,12 +7,5 @@
     "author": "Lion Burger <lionbur@gmail.com>",
     "license": "MIT",
     "private": true,
-    "workspaces": [
-        "mini-game",
-        "ibt-import",
-        "shared"
-    ],
-    "dependencies": {
-        "firebase": "^11.4.0"
-    }
+    "workspaces": ["mini-game", "ibt-import", "shared"]
 }

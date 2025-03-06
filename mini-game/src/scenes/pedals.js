@@ -94,112 +94,70 @@ export default class PedalsScene extends ResponsiveScene {
     }
   }
 
-//   getValue(info) {
+  getValue(info) {
 
-//     if (!info || !this.pedals || info.index === null) {
-//       return 0;
-//     }
-
-//     if (info.padId != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
-//     const {padId, type, index, min, max} = info;
-    
-//     const pad = this.padById(padId);
-//     console.log("G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)" , pad)
-//     if (!pad) {
-//       return 0;
-//     }
-
-//     const value = type === 'axis' ?
-//       pad.axes[index].value : pad.buttons[index].value;
-
-//     return Math.min(1, Math.max(0, (value - min) / (max - min)));
-//   } else if (info.padId == "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
-//     const {padId, type, index, min, max} = info;
-    
-    
-//     const pad = this.padById(padId);
-//     console.log('G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)' , pad)
-//     if (!pad) {
-//       return 0;
-//     }
-
-//     const value = type === 'axis' ?
-//       pad.axes[index].value : pad.buttons[index].value;
-
-//     return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-//   } else if (info.padId == "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
-//     const { padId, type, index, min, max } = info;
-
-//     const pad = this.padById(padId);
-//     console.log('HE SIM PEDALS connected' , pad)
-//     if (!pad) {
-//       return 0;
-//     }
-
-//     const value = type === 'axis' ? pad.axes[index].value : pad.buttons[index].value;
-
-//     if (index === 1 || index === 2) {
-//       return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-//     }
-
-//     return Math.min(1, Math.max(0, (value - min) / (max - min)));
-// } else if (info.padId == "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
-//   const { padId, type, index, min, max } = info;
-
-//   const pad = this.padById(padId);
-//   console.log("Simucube 2 Pro (Vendor: 16d0 Product: 0d60)", pad)
-
-//   if (!pad) {
-//     return 0;
-//   }
-
-//   if (index === 0) {
-//     const value = pad.axes[index].value;
-//     const normalizedValue = (value + 1) / 2;
-
-//     return Math.min(1, Math.max(0, normalizedValue)); 
-//       }
-//     } 
-//   }
-  
-getValue(info) {
-  if (!info || !this.pedals || info.index === null) {
+    if (!info || !this.pedals || info.index === null) {
       return 0;
-  }
+    }
 
+    if (info.padId != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
+    const {padId, type, index, min, max} = info;
+    
+    const pad = this.padById(padId);
+    if (!pad) {
+      return 0;
+    }
+
+    const value = type === 'axis' ?
+      pad.axes[index].value : pad.buttons[index].value;
+
+    return Math.min(1, Math.max(0, (value - min) / (max - min)));
+  } else if (info.padId == "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
+    const {padId, type, index, min, max} = info;
+    
+    
+    const pad = this.padById(padId);
+    if (!pad) {
+      return 0;
+    }
+
+    const value = type === 'axis' ?
+      pad.axes[index].value : pad.buttons[index].value;
+
+    return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
+  } else if (info.padId == "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
+    const { padId, type, index, min, max } = info;
+
+    const pad = this.padById(padId);
+    if (!pad) {
+      return 0;
+    }
+
+    const value = type === 'axis' ? pad.axes[index].value : pad.buttons[index].value;
+
+    if (index === 1 || index === 2) {
+      return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
+    }
+
+    return Math.min(1, Math.max(0, (value - min) / (max - min)));
+} else if (info.padId == "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
   const { padId, type, index, min, max } = info;
+
   const pad = this.padById(padId);
 
   if (!pad) {
-      return 0;
+    return 0;
   }
 
-  const value = type === 'axis' ? pad.axes[index].value : pad.buttons[index].value;
+  if (index === 0) {
+    const value = pad.axes[index].value;
+    const normalizedValue = (value + 1) / 2;
 
-  switch (padId) {
-      case "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)":
-          return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-
-      case "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)":
-          console.log('HE SIM PEDALS connected', pad);
-          if (index === 1 || index === 2) {
-              return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-          }
-          return Math.min(1, Math.max(0, (value - min) / (max - min)));
-
-      case "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)":
-          console.log("Simucube 2 Pro (Vendor: 16d0 Product: 0d60)", pad);
-          if (index === 0) {
-              return Math.min(1, Math.max(0, (value + 1) / 2));
-          }
-          break;
-
-      default:
-          console.log("Unknown device", padId);
-          return Math.min(1, Math.max(0, (value - min) / (max - min)));
+    return Math.min(1, Math.max(0, normalizedValue)); 
+      }
+    } 
   }
-}
-
+  
   getPedals() {
     const wheelPad = this.padById(this.pedals?.wheel?.padId);
     const wheelInput = wheelPad ?
