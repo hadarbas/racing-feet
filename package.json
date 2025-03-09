@@ -7,5 +7,12 @@
     "author": "Lion Burger <lionbur@gmail.com>",
     "license": "MIT",
     "private": true,
-    "workspaces": ["mini-game", "ibt-import", "shared"]
+    "workspaces": [
+        "mini-game",
+        "ibt-import",
+        "shared"
+    ],
+    "dependencies": {
+        "papaparse": "^5.5.2"
+    }
 }

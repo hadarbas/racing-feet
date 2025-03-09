@@ -10,6 +10,7 @@ import {TimeSeries} from 'pondjs';
 import JsonView from 'react-json-view';
 import {JSONEditor} from 'react-json-editor-viewer';
 import Button from '@mui/joy/Button';
+import { importIRacerCSV } from '../../tools/iracer-importer';
 
 import { setDocument, serverTimestamp, getDocuments } from 'shared/services/firebase/db';
 import '../../buffer';
@@ -134,6 +135,17 @@ function Import() {
   
 }, [meta, samples]);
 
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  importIRacerCSV(file, (mappedData) => {
+    console.log("Imported iRacer Data:", mappedData);
+    setSamples(mappedData); // Ažuriraj samples sa podacima
+    // Ovdje možeš proslediti mappedData u state ili level sistem igre
+  });
+};
+
 
   
   const handleJsonChange = useCallback((key, value, parent, data) => {
@@ -145,6 +157,11 @@ function Import() {
 
   return (<RootContainer>
     <TopPane>
+    
+    <label>iRacer
+    <input type="file" accept=".csv" onChange={handleFileUpload}/>
+    </label>
+
       <label>
         CSV file&nbsp;
         <input
@@ -210,6 +227,8 @@ function Import() {
           { key: "wheel", label: "Wheel" },
         ]}
     />)}
+
+
     </TopPane>
     <RowPane>
       {isLoading && samples.length === 0
