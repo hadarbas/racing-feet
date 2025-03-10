@@ -382,51 +382,93 @@ export default class SetupScene extends ResponsiveScene {
     }
   }
 
-  detectGamepadPressed() {
+detectGamepadPressed() {
     for (const pad of this.pads) {
-      if (pad.id != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
-      for (const button of pad.buttons) {
-        if (button.value >= button.threshold) {
-          return {
-            type: 'button',
-            padId: pad.id,
-            index: button.index,
-            threshold: button.threshold,
-          };
-        }
-      }
-      for (const axis of pad.axes) {
-        if (axis.value >= axis.threshold &&
-          axis.value <= 1) {
-          return {
-            type: 'axis',
-            padId: pad.id,
-            index: axis.index,
-            threshold: axis.threshold,
-          };
-        }
-      }
-  } else {
-    for (const axis of pad.axes) {
-      if (((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) || (axis.index == 0 && (axis.value > 0+axis.threshold || axis.value < 0 - axis.threshold)))  {
-       var  threshold = axis.threshold
+        if (
+            pad.id != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)" &&
+            pad.id != "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)" &&
+            pad.id != "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)"
+        ) {
+            for (const button of pad.buttons) {
+                if (button.value >= button.threshold) {
+                    return {
+                        type: "button",
+                        padId: pad.id,
+                        index: button.index,
+                        threshold: button.threshold,
+                    };
+                }
+            }
 
-        if (axis.index == 2 || axis.index == 5){
-          threshold = 1
+            for (const axis of pad.axes) {
+                if (axis.value >= axis.threshold && axis.value <= 1) {
+                    return {
+                        type: "axis",
+                        padId: pad.id,
+                        index: axis.index,
+                        threshold: axis.threshold,
+                    };
+                }
+            }
+        } 
+        else if (pad.id == "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)") {
+            for (const axis of pad.axes) {
+                if (
+                    ((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) || 
+                    (axis.index == 0 && (axis.value > 0 + axis.threshold || axis.value < 0 - axis.threshold))
+                ) {
+                    let threshold = axis.threshold;
+                    if (axis.index == 2 || axis.index == 5) {
+                        threshold = 1;
+                    }
+
+                    return {
+                        type: "axis",
+                        padId: pad.id,
+                        index: axis.index,
+                        threshold: threshold,
+                    };
+                }
+            }
+        } 
+        else if (pad.id == "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
+            for (let i = 0; i < pad.axes.length; i++) {
+                let axisValue = pad.axes[i];
+
+                // Normalizacija iz opsega (-1 do 0) u (0 do 1)
+                let normalizedValue = Math.abs(axisValue); 
+
+                let threshold = 0.1; // Prag osetljivosti
+
+                if (normalizedValue >= threshold) {
+                    return {
+                        type: "axis",
+                        padId: pad.id,
+                        index: i,
+                        threshold: threshold,
+                        value: normalizedValue, // Slanje normalizovane vrednosti
+                    };
+                }
+            }
+        } 
+        else if (pad.id == "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
+            for (const axis of pad.axes) {
+                if (axis.index === 0) {
+                    const normalizedValue = (axis.value + 1) / 2;
+
+                    return {
+                        type: "axis",
+                        padId: pad.id,
+                        index: axis.index,
+                        threshold: axis.threshold,
+                        value: Math.min(1, Math.max(0, normalizedValue)),
+                    };
+                }
+            }
         }
-        
-        return {
-          type: 'axis',
-          padId: pad.id,
-          index: axis.index,
-          threshold: threshold,
-        };
-      }
-    }
-  }
     }
     return null;
-  }
+}
 
   updateGamepadId() {
     this.gamepadId.setText(`[color=#888]Game Controller:\n[/color]${this.pad.id}`);
