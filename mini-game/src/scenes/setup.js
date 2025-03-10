@@ -118,7 +118,6 @@ export default class SetupScene extends ResponsiveScene {
       case 99:
       case 101: {
         this.setPrompt('Please [b]release all[/b] pedals');
-
         const pressed = this.detectGamepadPressed();
         if (!pressed) {
           if (this.greenButtonMin !== null && this.buttons.gas) {
@@ -382,92 +381,95 @@ export default class SetupScene extends ResponsiveScene {
     }
   }
 
-detectGamepadPressed() {
-    for (const pad of this.pads) {
-        if (
-            pad.id != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)" &&
-            pad.id != "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)" &&
-            pad.id != "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)"
-        ) {
-            for (const button of pad.buttons) {
-                if (button.value >= button.threshold) {
-                    return {
-                        type: "button",
-                        padId: pad.id,
-                        index: button.index,
-                        threshold: button.threshold,
-                    };
-                }
-            }
+  detectGamepadPressed() {
+    let detectedInputs = []; // Sakuplja sve detektovane inpute
 
+    for (const pad of this.pads) {
+        if (pad.id === "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)") {
+            // Logika za G923
             for (const axis of pad.axes) {
-                if (axis.value >= axis.threshold && axis.value <= 1) {
-                    return {
-                        type: "axis",
-                        padId: pad.id,
-                        index: axis.index,
-                        threshold: axis.threshold,
-                    };
-                }
-            }
-        } 
-        else if (pad.id == "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)") {
-            for (const axis of pad.axes) {
-                if (
-                    ((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) || 
-                    (axis.index == 0 && (axis.value > 0 + axis.threshold || axis.value < 0 - axis.threshold))
-                ) {
+                if (((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) ||
+                    (axis.index == 0 && (axis.value > 0 + axis.threshold || axis.value < 0 - axis.threshold))) {
                     let threshold = axis.threshold;
                     if (axis.index == 2 || axis.index == 5) {
                         threshold = 1;
                     }
-
-                    return {
-                        type: "axis",
+                    detectedInputs.push({
+                        type: 'axis',
                         padId: pad.id,
                         index: axis.index,
                         threshold: threshold,
-                    };
+                    });
                 }
             }
         } 
-        else if (pad.id == "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
-            for (let i = 0; i < pad.axes.length; i++) {
-                let axisValue = pad.axes[i];
-
-                // Normalizacija iz opsega (-1 do 0) u (0 do 1)
-                let normalizedValue = Math.abs(axisValue); 
-
-                let threshold = 0.1; // Prag osetljivosti
-
-                if (normalizedValue >= threshold) {
-                    return {
-                        type: "axis",
-                        padId: pad.id,
-                        index: i,
-                        threshold: threshold,
-                        value: normalizedValue, // Slanje normalizovane vrednosti
-                    };
-                }
-            }
-        } 
-        else if (pad.id == "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
+        
+        else if (pad.id === "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
+            // Logika za Simucube 2 Pro (volan)
             for (const axis of pad.axes) {
                 if (axis.index === 0) {
-                    const normalizedValue = (axis.value + 1) / 2;
-
-                    return {
-                        type: "axis",
+                    if (axis.value < -0.01 || axis.value > 0.01) {
+                        detectedInputs.push({
+                            type: 'axis',
+                            padId: pad.id,
+                            index: axis.index,
+                            value: axis.value
+                        });
+                    }
+                }
+            }
+        } 
+        
+        else if (pad.id === "HE SIM PEDALS") {
+            // Logika za HE SIM PEDALS (gas i kočnica)
+            for (const axis of pad.axes) {
+                if (axis.index === 2 && axis.value > -0.8) {
+                    detectedInputs.push({
+                        type: 'axis',
+                        padId: pad.id,
+                        index: axis.index,
+                        value: axis.value,
+                        action: "throttle"
+                    });
+                }
+                if (axis.index === 1 && axis.value > -0.95) {
+                    detectedInputs.push({
+                        type: 'axis',
+                        padId: pad.id,
+                        index: axis.index,
+                        value: axis.value,
+                        action: "brake"
+                    });
+                }
+            }
+        } 
+        
+        else {
+            // Defaultna logika za druge gamepade
+            for (const button of pad.buttons) {
+                if (button.value >= button.threshold) {
+                    detectedInputs.push({
+                        type: 'button',
+                        padId: pad.id,
+                        index: button.index,
+                        threshold: button.threshold,
+                    });
+                }
+            }
+            for (const axis of pad.axes) {
+                if (axis.value >= axis.threshold && axis.value <= 1) {
+                    detectedInputs.push({
+                        type: 'axis',
                         padId: pad.id,
                         index: axis.index,
                         threshold: axis.threshold,
-                        value: Math.min(1, Math.max(0, normalizedValue)),
-                    };
+                    });
                 }
             }
         }
     }
-    return null;
+
+    return detectedInputs.length > 0 ? detectedInputs[0] : null; // Vraća prvi pronađeni input
 }
 
   updateGamepadId() {
