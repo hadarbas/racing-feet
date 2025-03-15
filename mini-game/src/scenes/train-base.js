@@ -171,10 +171,10 @@ export default class TrainExerciseScene extends SteppedScene {
       this.currentStep = 'over_release_2';
     }
 
-   setTimeout(() => {
+   /*setTimeout(() => {
       console.log("Prošlo je 3 sekunde!");
       this.currentStep = 'play';
-  }, 3000);
+  }, 3000);*/
 
   }
 
