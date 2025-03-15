@@ -7,7 +7,7 @@ export default class MainMenuScene extends MenuScene {
   constructor() {
     const playerName = localStorage.getItem("name") || null;
   
-    const menuOptions = ['Train', 'Recorded exercises', 'High score','Setup'];
+    const menuOptions = ['Train', 'Recorded exercises', 'High score', 'Setup', 'Glossary'];
 
     if (playerName === "admin") {
         menuOptions.splice(1, 0, "Record a new exercise"); 
@@ -72,22 +72,28 @@ async create() {
   handleItemClick(item) {
     if (this.menuDisabled) return;
 
-    if (item === "Logout"){
+    if (item === "Logout") {
        localStorage.removeItem("name"); 
        localStorage.removeItem("alreadyReloaded"); 
        location.reload(); 
-        return
+       return;
     }
 
     const sceneKey = item.toLowerCase().replace(/\s/g, '-');
-    
+
+    if (item === "Glossary") {
+      this.scene.start("glossary");
+      return;
+  }
+
     if (this.scene.get(sceneKey)) {
       this.scene.start(sceneKey);
       this.scene.get(sceneKey).scene.restart();
     } else {
       console.error(`Scena "${sceneKey}" ne postoji!`);
     }
-  }
+}
+
 
 
   async checkUserExists(name) {
