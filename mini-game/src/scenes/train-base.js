@@ -140,6 +140,14 @@ export default class TrainExerciseScene extends SteppedScene {
     this.prompt.setPosition(...this.fit(600, 950));
   }
 
+  getStarRating(score) {
+    if (score <= 60) return "⭐";
+    if (score <= 75) return "⭐⭐";
+    if (score <= 85) return "⭐⭐⭐";
+    if (score <= 95) return "⭐⭐⭐⭐";
+    return "⭐⭐⭐⭐⭐";
+}
+
   handleStep_init() {
     super.handleStep_init();
 
@@ -163,10 +171,10 @@ export default class TrainExerciseScene extends SteppedScene {
       this.currentStep = 'over_release_2';
     }
 
-   /* setTimeout(() => {
+   setTimeout(() => {
       console.log("Prošlo je 3 sekunde!");
       this.currentStep = 'play';
-  }, 3000);*/
+  }, 3000);
 
   }
 
@@ -321,9 +329,9 @@ processPoint(point, key) {
     }
 
     this.setPrompt([
-      step === 'play' 
-          ? `Last Corner Score: [b]${this.lastCornerScore}[/b]` 
-          : `Score: [b]${this.currentScore}[/b]`,
+      ['over_release_1', 'over_release_2', 'over_menu'].includes(step)
+    ? `Score: [b]${this.getStarRating(this.currentScore)}[/b]`
+    : `Score: [b]${this.currentScore}[/b]`,
       {
           start: 'Please press [b]full gas[/b] to start\n'
               + 'or [b]full brake[/b] to return to main menu',
