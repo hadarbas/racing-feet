@@ -17,7 +17,7 @@ export default class SelectExerciseScene extends MenuScene {
   create() {
     super.create();
 
-    this.deleteKey = this.input.keyboard.addKey('d');
+    this.deleteKey = this.input.keyboard.addKey('delete');
   }
 
   async deleteCurrentLevel(level) {
