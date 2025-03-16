@@ -158,7 +158,7 @@ const handleFileUpload = (event) => {
   return (<RootContainer>
     <TopPane>
     
-    <label>iRacer
+    <label>Real Car Data&nbsp;
     <input type="file" accept=".csv" onChange={handleFileUpload}/>
     </label>
 
