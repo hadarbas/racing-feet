@@ -461,7 +461,7 @@ export default class SetupScene extends ResponsiveScene {
       else if (normalizedId.includes('hesimpedals')) {
         // Logika za HE SIM PEDALS (gas i kočnica)
         for (const axis of pad.axes) {
-          if (axis.index === 2 && axis.value > -0.8) {
+          if (axis.index === 2 ) {
             detectedInputs.push({
               type: 'axis',
               padId: pad.id,
@@ -470,7 +470,7 @@ export default class SetupScene extends ResponsiveScene {
               action: "throttle"
             });
           }
-          if (axis.index === 1 && axis.value > -0.95) {
+          if (axis.index === 1 ) {
             detectedInputs.push({
               type: 'axis',
               padId: pad.id,

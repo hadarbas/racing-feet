@@ -114,6 +114,8 @@ export default class PedalsScene extends ResponsiveScene {
     } else if (info.padId === "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
       const { padId, type, index, min, max } = info;
       const pad = this.padById(padId);
+
+      console.log(pad, 'padID')
       if (!pad) {
         return 0;
       }
