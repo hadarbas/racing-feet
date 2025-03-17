@@ -112,19 +112,26 @@ export default class PedalsScene extends ResponsiveScene {
   
       return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
     } else if (info.padId === "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
-      const { padId, type, index, min, max } = info;
+      const { padId, type, index } = info;
       const pad = this.padById(padId);
       if (!pad) {
         return 0;
       }
-      const value = (type === 'axis')
+    
+      const rawValue = (type === 'axis')
         ? pad.axes[index].value
         : pad.buttons[index].value;
-  
-      if (index === 1 || index === 2) {
-        return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
-      } else {
-        return Math.min(1, Math.max(0, (value - min) / (max - min)));
+    
+      if (index === 2) {
+        let normalized = (rawValue - (-0.83)) / ((-0.28) - (-0.83));
+        normalized = Math.min(1, Math.max(0, normalized));
+        return normalized;
+      }
+    
+      else if (index === 1) {
+        let normalized = (rawValue - (-0.98)) / ((-0.036) - (-0.98));
+        normalized = Math.min(1, Math.max(0, normalized));
+        return normalized;
       }
     }else if (info.padId === "Simucube 2 Pro (Vendor: 16d0 Product: 0d60)") {
       const { padId, type, index, min, max } = info;
