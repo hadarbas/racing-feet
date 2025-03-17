@@ -378,43 +378,97 @@ export default class SetupScene extends ResponsiveScene {
   }
 
   detectGamepadPressed() {
+    let detectedInputs = []; // Sakuplja sve detektovane inpute
+  
     for (const pad of this.pads) {
-      if (pad.id != "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)"){
-      for (const button of pad.buttons) {
-        if (button.value >= button.threshold) {
-          return {
-            type: 'button',
-            padId: pad.id,
-            index: button.index,
-            threshold: button.threshold,
-          };
+      if (!pad) continue; 
+  
+      // Normalizacija ID-ja:
+      // 1) Sve u mala slova  2) Uklonimo sve razmake
+      const normalizedId = pad.id.toLowerCase().replace(/\s+/g, '');
+  
+      if (normalizedId.includes('g923racingwheelforplaystationandpc(vendor:046dproduct:c266)')) {
+        for (const axis of pad.axes) {
+          if (
+            ((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) ||
+            (axis.index == 0 && (axis.value > 0 + axis.threshold || axis.value < 0 - axis.threshold))
+          ) {
+            let threshold = axis.threshold;
+            if (axis.index == 2 || axis.index == 5) {
+              threshold = 1;
+            }
+            detectedInputs.push({
+              type: 'axis',
+              padId: pad.id,
+              index: axis.index,
+              threshold: threshold,
+            });
+          }
         }
       }
-      for (const axis of pad.axes) {
-        if (axis.value >= axis.threshold &&
-          axis.value <= 1) {
-          return {
-            type: 'axis',
-            padId: pad.id,
-            index: axis.index,
-            threshold: axis.threshold,
-          };
+      else if (normalizedId.includes('simucube2pro(vendor:16d0product:0d60)')) {
+        // Logika za Simucube 2 Pro (volan)
+        for (const axis of pad.axes) {
+          if (axis.index === 0) {
+            if (axis.value < -0.01 || axis.value > 0.01) {
+              detectedInputs.push({
+                type: 'axis',
+                padId: pad.id,
+                index: axis.index,
+                value: axis.value
+              });
+            }
+          }
         }
       }
-  } else {
-    for (const axis of pad.axes) {
-      if (((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) || (axis.index == 0 && (axis.value > 0+axis.threshold || axis.value < 0 - axis.threshold)))  {
-        return {
-          type: 'axis',
-          padId: pad.id,
-          index: axis.index,
-          threshold: axis.threshold,
-        };
+      else if (normalizedId.includes('hesimpedals')) {
+        // Logika za HE SIM PEDALS (gas i kočnica)
+        for (const axis of pad.axes) {
+          if (axis.index === 2 ) {
+            detectedInputs.push({
+              type: 'axis',
+              padId: pad.id,
+              index: axis.index,
+              value: axis.value,
+              action: "throttle"
+            });
+          }
+          if (axis.index === 1 ) {
+            detectedInputs.push({
+              type: 'axis',
+              padId: pad.id,
+              index: axis.index,
+              value: axis.value,
+              action: "brake"
+            });
+          }
+        }
+      }
+      else {
+        for (const button of pad.buttons) {
+          if (button.value >= button.threshold) {
+            detectedInputs.push({
+              type: 'button',
+              padId: pad.id,
+              index: button.index,
+              threshold: button.threshold,
+            });
+          }
+        }
+        for (const axis of pad.axes) {
+          if (axis.value >= axis.threshold && axis.value <= 1) {
+            detectedInputs.push({
+              type: 'axis',
+              padId: pad.id,
+              index: axis.index,
+              threshold: axis.threshold,
+            });
+          }
+        }
       }
     }
-  }
-    }
-    return null;
+    // Vraćamo cjelokupan niz detektovanih inputa
+    return detectedInputs;
   }
 
   updateGamepadId() {
