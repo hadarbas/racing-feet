@@ -120,7 +120,7 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('Please [b]release all[/b] pedals');
 
         const pressed = this.detectGamepadPressed();
-        if (!pressed) {
+        if (pressed.length === 0) {
           if (this.greenButtonMin !== null && this.buttons.gas) {
             this.greenButtonMin = Math.min(
               this.getValue(this.buttons.gas),
@@ -146,8 +146,8 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('Please [b]press GAS[/b] pedal');
       
         const pressed = this.detectGamepadPressed();
-        if (pressed) {
-          this.buttons.gas = pressed;
+        if (pressed.length > 0) {
+          this.buttons.gas = pressed[0];
           this.timeGreen = Date.now();
           this.step++;
         }
@@ -171,8 +171,8 @@ export default class SetupScene extends ResponsiveScene {
         this.setPrompt('Please [b]press BRAKE[/b] pedal');
 
         const pressed = this.detectGamepadPressed();
-        if (pressed) {
-          this.buttons.brake = pressed;
+        if (pressed.length > 0) {
+          this.buttons.brake = pressed[0];
           this.timeRed = Date.now();
           this.step++;
         }
@@ -271,17 +271,15 @@ export default class SetupScene extends ResponsiveScene {
       case 18: {
         this.setPrompt('Please turn [b]steering wheel RIGHT[/b]');
 
-        const pressed = this.detectGamepadPressed();
-        if (!pressed) {
+        if (pressed.length === 0) {
           break;
         }
 
-        const value = this.getValue(pressed);
+        const value = this.getValue(pressed[0]);
         if (value > 0) {
-          this.buttons.wheel = pressed;
+          this.buttons.wheel = pressed[0];
           this.step++;
         }
-
       } break;
 
       case 20: {
