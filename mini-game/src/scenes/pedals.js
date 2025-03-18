@@ -53,7 +53,7 @@ export default class PedalsScene extends ResponsiveScene {
 
   padById(id) {
     if (!id) return null;
-  
+
     for (let i = 0; i < this.input.gamepad.total; i++) {
       const pad = this.input.gamepad.getPad(i);
       if (pad?.id === id) {
@@ -62,7 +62,7 @@ export default class PedalsScene extends ResponsiveScene {
     }
     return null;
   }
-  
+
   update() {
     super.update();
     this.updatePedals();
@@ -83,7 +83,7 @@ export default class PedalsScene extends ResponsiveScene {
           if (!pad) {
             continue;
           }
-    
+
           if (pad.id === this.pedals.gamepadId) {
             this.pad = pad;
             this.gamepadId.setText(`[color=#888]Game Controllers:\n[/color]${this.controllerIds}`);
@@ -98,9 +98,9 @@ export default class PedalsScene extends ResponsiveScene {
     if (!info || !this.pedals || info.index === null) {
       return 0;
     }
-  
+
     if (info.padId === "G923 Racing Wheel for PlayStation and PC (Vendor: 046d Product: c266)") {
-     
+
       const { padId, type, index, min, max } = info;
       const pad = this.padById(padId);
       if (!pad) {
@@ -109,21 +109,18 @@ export default class PedalsScene extends ResponsiveScene {
       const value = (type === 'axis')
         ? pad.axes[index].value
         : pad.buttons[index].value;
-  
+
       return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
     } else if (info.padId === "HE SIM PEDALS (Vendor: 10c4 Product: 8b02)") {
       const { padId, type, index, min, max } = info;
       const pad = this.padById(padId);
 
-      console.log(pad, 'padID')
       if (!pad) {
         return 0;
       }
       const value = (type === 'axis')
         ? pad.axes[index].value
         : pad.buttons[index].value;
-  
-      console.log(value, 'vrijednost axis-a')
 
       if (index === 1 || index === 2) {
         return Math.min(1, Math.max(0, (-1 * value - min) / (max - min)));
@@ -140,7 +137,7 @@ export default class PedalsScene extends ResponsiveScene {
         const value = pad.axes[index].value;
         return Math.min(1, Math.max(0, (value + 1) / 2));
       } else {
-        return 0; 
+        return 0;
       }
     }else {
       const { padId, type, index, min, max } = info;
@@ -148,15 +145,15 @@ export default class PedalsScene extends ResponsiveScene {
       if (!pad) {
         return 0;
       }
-  
+
       const value = (type === 'axis')
         ? pad.axes[index].value
         : pad.buttons[index].value;
-  
+
       return Math.min(1, Math.max(0, (value - min) / (max - min)));
     }
   }
-  
+
   getPedals() {
     const wheelPad = this.padById(this.pedals?.wheel?.padId);
     const wheelInput = wheelPad ?
@@ -187,7 +184,7 @@ export default class PedalsScene extends ResponsiveScene {
     if (!pedals) {
       return;
     }
-    
+
     const {gas = 0, brake = 0, wheel = 0} = pedals;
 
     this.pedalsText.setText(`${

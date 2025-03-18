@@ -1,5 +1,5 @@
 import ResponsiveScene from './responsive';
-import {getObject, setObject} from 'shared/services/localStorage';
+import {setObject} from 'shared/services/localStorage';
 
 export default class SetupScene extends ResponsiveScene {
   gamepadId;
@@ -30,7 +30,7 @@ export default class SetupScene extends ResponsiveScene {
   constructor () {
     super({key: 'setup'});
   }
-    
+
   init() {
     this.gamepadId = null;
     this.pad = null;
@@ -80,7 +80,7 @@ export default class SetupScene extends ResponsiveScene {
       })
       .setOrigin(0.5)
       .setScrollFactor(0);
-  
+
     const [xBlue, yBlue] = this.fit(200, 400);
     const [xRed, yRed] = this.fit(800, 400);
     const [xGreen, yGreen] = this.fit(1000, 400);
@@ -105,7 +105,7 @@ export default class SetupScene extends ResponsiveScene {
   updateState() {
     switch (this.step) {
       case 1:
-      case 4: 
+      case 4:
       case 7:
       case 9:
       case 11:
@@ -141,14 +141,14 @@ export default class SetupScene extends ResponsiveScene {
           this.step += 1;
         } else {
           // Ako ima pritisnutih inputa, samo ispišemo  i čekamo
-          console.log(pressed);
+          // console.log(pressed);
         }
         break;
       }
 
       case 2: {
         this.setPrompt('Please [b]press GAS[/b] pedal');
-      
+
         const pressed = this.detectGamepadPressed();
         if (pressed.length > 0) {
           // Uzmemo prvi input iz niza
@@ -156,15 +156,15 @@ export default class SetupScene extends ResponsiveScene {
           this.timeGreen = Date.now();
           this.step++;
         }
-      } 
+      }
       break;
 
       case 3: {
         this.setPrompt('Please [b]release GAS[/b] pedal and wait 1 second');
 
         const {gas} = this.getPedals();
-        const minValue = isNaN(this.buttons.gas.minValue) 
-          ? this.buttons.gas.threshold 
+        const minValue = isNaN(this.buttons.gas.minValue)
+          ? this.buttons.gas.threshold
           : this.buttons.gas.minValue;
 
         if (gas < minValue) {
@@ -175,7 +175,7 @@ export default class SetupScene extends ResponsiveScene {
         } else if (gas > minValue){
           this.buttons.gas.minValue = undefined;
         }
-      } 
+      }
       break;
 
       case 5: {
@@ -187,7 +187,7 @@ export default class SetupScene extends ResponsiveScene {
           this.timeRed = Date.now();
           this.step++;
         }
-      } 
+      }
       break;
 
       case 6: {
@@ -200,16 +200,17 @@ export default class SetupScene extends ResponsiveScene {
         if (brake < minValue) {
           this.buttons.brake.minValue = brake;
           this.timeRed = Date.now();
-        } else if (brake === minValue && Date.now() - this.timeRed > 1000) {
-          this.redButtonThreshold = Math.min(1, minValue +
-            this.buttons.brake.threshold);
-          this.step++;
         } else if (brake > minValue){
           this.buttons.brake.minValue = undefined;
         }
-      } 
+        if (brake === minValue && Date.now() - this.timeRed > 1000) {
+          this.redButtonThreshold = Math.min(1, minValue +
+            this.buttons.brake.threshold);
+          this.step++;
+        }
+      }
       break;
-  
+
       case 8: {
         this.setPrompt('Please press both [b]GAS and BRAKE[/b] pedals');
 
@@ -218,7 +219,7 @@ export default class SetupScene extends ResponsiveScene {
           gas >= this.greenButtonThreshold) {
           this.step++; // release all
         }
-      } 
+      }
       break;
 
       case 10: {
@@ -240,14 +241,14 @@ export default class SetupScene extends ResponsiveScene {
         ) {
           this.step++; // release all
         }
-      } 
+      }
       break;
 
       case 12: {
         this.setPrompt(
           'Please press [b]GAS[/b] pedal to the [b]END[/b]' +
-          (this.greenButtonMax >= this.greenButtonThreshold 
-            ? ', then release' 
+          (this.greenButtonMax >= this.greenButtonThreshold
+            ? ', then release'
             : '')
         );
 
@@ -258,7 +259,7 @@ export default class SetupScene extends ResponsiveScene {
           this.greenButtonMax = Math.max(gas, this.greenButtonMax);
           this.greenMaxIndicator.setScale(this.greenButtonMax);
         }
-      } 
+      }
       break;
 
       case 14: {
@@ -275,12 +276,12 @@ export default class SetupScene extends ResponsiveScene {
           this.redButtonMax = this.redButtonThreshold;
           this.redMaxIndicator.setScale(this.redButtonThreshold);
         } else if (
-          this.redButtonThreshold > 0.2 && 
+          this.redButtonThreshold > 0.2 &&
           Date.now() - this.timeRed > 1000
         ) {
           this.step++; // release all
         }
-      } 
+      }
       break;
 
       case 16: {
@@ -296,7 +297,7 @@ export default class SetupScene extends ResponsiveScene {
           this.redButtonMax = Math.max(brake, this.redButtonMax);
           this.redMaxIndicator.setScale(this.redButtonMax);
         }
-      } 
+      }
       break;
 
       case 18: {
@@ -306,24 +307,25 @@ export default class SetupScene extends ResponsiveScene {
         if (pressed.length === 0) {
           break;
         }
-
         const value = this.getValue(pressed[0]);
+
         if (value > 0) {
           this.buttons.wheel = pressed[0];
           this.step++;
         }
-      } 
+      }
       break;
 
       case 20: {
         this.setPrompt('Please turn[b]steering wheel LEFT[/b]');
-  
+
         const {wheel} = this.getPedals();
+
         if (wheel < -this.buttons.wheel.threshold) {
           this.timeBlue = Date.now();
           this.step++;
         }
-      } 
+      }
       break;
 
       case 22: {
@@ -337,15 +339,15 @@ export default class SetupScene extends ResponsiveScene {
         } else if (!this.timeBlue) {
           this.timeBlue = Date.now();
         }
-      } 
+      }
       break;
 
       case 100: {
         this.setPrompt('You\'re all set\nPress any pedal for main menu');
 
         const {gas, brake} = this.getPedals();
-        if (gas >= this.greenButtonThreshold
-          || brake >= this.redButtonThreshold) {
+
+        if (gas >= this.greenButtonThreshold || brake >= this.redButtonThreshold) {
           setObject('pedals', {
             gas: {
               index: this.buttons.gas.index,
@@ -414,17 +416,17 @@ export default class SetupScene extends ResponsiveScene {
 
   detectGamepadPressed() {
     let detectedInputs = []; // Sakuplja sve detektovane inpute
-  
+
     for (const pad of this.pads) {
-      if (!pad) continue; 
-  
+      if (!pad) continue;
+
       // Normalizacija ID-ja:
       // 1) Sve u mala slova  2) Uklonimo sve razmake
       const normalizedId = pad.id.toLowerCase().replace(/\s+/g, '');
-  
+
       // Poređenje po dijelovima stringa, bez obzira na razmake i velika/mala slova
       if (normalizedId.includes('g923racingwheelforplaystationandpc(vendor:046dproduct:c266)')) {
-        // Logika za G923 
+        // Logika za G923
         for (const axis of pad.axes) {
           if (
             ((axis.index > 0 && (axis.index < 3 || axis.index == 5)) && axis.value < 1) ||
@@ -446,13 +448,15 @@ export default class SetupScene extends ResponsiveScene {
       else if (normalizedId.includes('simucube2pro(vendor:16d0product:0d60)')) {
         // Logika za Simucube 2 Pro (volan)
         for (const axis of pad.axes) {
+          let threshold = axis.threshold;
           if (axis.index === 0) {
             if (axis.value < -0.01 || axis.value > 0.01) {
               detectedInputs.push({
                 type: 'axis',
                 padId: pad.id,
                 index: axis.index,
-                value: axis.value
+                value: axis.value,
+                threshold: threshold,
               });
             }
           }
@@ -461,22 +465,27 @@ export default class SetupScene extends ResponsiveScene {
       else if (normalizedId.includes('hesimpedals')) {
         // Logika za HE SIM PEDALS (gas i kočnica)
         for (const axis of pad.axes) {
-          if (axis.index === 2 ) {
+          const value = axis.value;
+          // Brake
+          //if (axis.index === 1 && value > -0.9) {
+          if (axis.index === 1) {
             detectedInputs.push({
               type: 'axis',
               padId: pad.id,
               index: axis.index,
-              value: axis.value,
-              action: "throttle"
+              value: value,
+              action: "brake"
             });
           }
-          if (axis.index === 1 ) {
+          // Throttle
+          //else if (axis.index === 2 && value > -0.8) {
+          else if (axis.index === 2) {
             detectedInputs.push({
               type: 'axis',
               padId: pad.id,
               index: axis.index,
-              value: axis.value,
-              action: "brake"
+              value: value,
+              action: "throttle"
             });
           }
         }
@@ -527,7 +536,7 @@ export default class SetupScene extends ResponsiveScene {
 
   update() {
     super.update();
-    
+
     this.updateState();
     this.updatePedals();
   }
