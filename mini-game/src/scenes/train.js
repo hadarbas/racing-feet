@@ -15,7 +15,7 @@ export default class TrainScene extends BaseTrainScene {
     this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
     this.escapeKey.on('down', () => {
-        this.scene.start('train'); 
+        this.scene.start('LevelDetailsScene'); 
     });
     this.askedForSave = false
 }

@@ -28,7 +28,7 @@ export default class SelectRecordedExerciseScene extends MenuScene {
 
     try {
       await deleteDocument("exercise", this.selectedExercise); // Delete exercise from database
-      console.log(`  Exercise '${this.selectedExercise}' has been deleted.`);
+      console.log(`Exercise '${this.selectedExercise}' has been deleted.`);
 
       alert(`Exercise '${this.selectedExercise}' deleted successfully.`);
       this.scene.start("recorded-exercises"); // Return user to the main menu
@@ -89,23 +89,23 @@ export default class SelectRecordedExerciseScene extends MenuScene {
 
   async handleItemClick(name) {
     try {
-      console.log(`🔍 Fetching exercise '${name}'...`);
+      console.log(`Fetching exercise '${name}'...`);
 
       const levelDoc = await getDocument("exercise", name);
 
       if (!levelDoc.exists()) {
-        console.error(`  Exercise '${name}' does not exist!`);
-        alert(`  Exercise '${name}' not found.`);
+        console.error(`Exercise '${name}' does not exist!`);
+        alert(`Exercise '${name}' not found.`);
         return;
       }
 
       const levelData = levelDoc.data();
-      console.log(`  Exercise '${name}' found:`, levelData);
+      console.log(`Exercise '${name}' found:`, levelData);
 
       this.scene.start('train-3', { name, data: levelData.data });
 
     } catch (error) {
-      console.error("  Error fetching exercise:", error);
+      console.error("Error fetching exercise:", error);
       alert("Error fetching exercise, check the console for details.");
     }
   }

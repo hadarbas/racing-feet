@@ -53,10 +53,11 @@ export default class TrainExerciseScene extends SteppedScene {
 
   init(params) {
     super.init(params);
-
+    console.log("Received data:", params.data);
     this.name = params.name;
-    this.data = params.data;
-    this.oldScore = params.oldScore
+    this.data = params.data.data;
+    console.log("Received data:", params.data);
+    this.oldScore = params.oldScore;
 
     this.maxTime = Math.max(...this.data.map(({time}) => time));
     this.xWidth = this.baseWidth * this.maxTime / SECONDS_PER_SCREEN;
