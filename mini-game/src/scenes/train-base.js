@@ -53,46 +53,7 @@ export default class TrainExerciseScene extends SteppedScene {
 
   init(params) {
     super.init(params);
-    console.log("Received data:", params.data);
-    this.name = params.name;
-    this.data = params.data.data;
-    console.log("Received data:", params.data);
-    this.oldScore = params.oldScore;
-
-    this.maxTime = Math.max(...this.data.map(({time}) => time));
-    this.xWidth = this.baseWidth * this.maxTime / SECONDS_PER_SCREEN;
-
-    this.green = this.getPointsForKey(this.data, 'green');
-    this.red = this.getPointsForKey(this.data, 'red');
-    this.blue = this.getPointsForKey(this.data, 'blue');
-
-    this.recording = [];
-    this.currentScore = 0;
-    this.lastCornerScore = 0;
-
-    this.corner = false
-    this.cornerEnd = false
-    this.scorePerCorner = []
-    this.distancesInOneCorner = []
-
-    this.distanceBonus = 5
-    this.askedForSave = false
-
-
-    switch(params.levelDifficulty) {
-      case "easy":
-        this.levelDifficultyPoints = 30;
-        break;
-      case "normal":
-        this.levelDifficultyPoints = 20;
-        break;
-      case "hard":
-        this.levelDifficultyPoints = 10;
-        break;
-      default:
-        this.levelDifficultyPoints = 0;
-    }
-
+    
   }
 
   process = (data, key) => data
