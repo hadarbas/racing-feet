@@ -9,12 +9,10 @@ export default class GlossaryScene extends MenuScene {
     create() {
         super.create();
 
-        let startY = 70; // Početna Y koordinata
+        let startY = 70; 
 
-        // Dodajemo grupu u kojoj će biti sav tekst
         this.content = this.add.container(0, 0);
 
-        // Kontrole
         this.content.add(this.add.text(100, startY, "Glossary - Controls Guide", { fontSize: "30px", fill: "#fff" }));
         startY += 50;
 
@@ -34,7 +32,6 @@ export default class GlossaryScene extends MenuScene {
 
         startY += controls.length * 40 + 40;
 
-        // Boje linija
         this.content.add(this.add.text(100, startY, "Glossary - Line Colors", { fontSize: "30px", fill: "#fff" }));
         startY += 50;
 
@@ -50,7 +47,6 @@ export default class GlossaryScene extends MenuScene {
 
         startY += colors.length * 40 + 40;
 
-        // Scoring sistem
         this.content.add(this.add.text(100, startY, "Glossary - Scoring System", { fontSize: "30px", fill: "#fff" }));
         startY += 50;
 
@@ -68,19 +64,15 @@ export default class GlossaryScene extends MenuScene {
 
         startY += scoring.length * 40 + 40;
 
-        // ESC tekst
         this.content.add(this.add.text(100, startY, "Press ESC to return", { fontSize: "20px", fill: "#ff0" }));
 
-        // *** PODEŠAVANJE SCROLLING SISTEMA ***
-        this.maxScrollY = Math.max(0, startY - this.scale.height + 100); // Maksimalni scroll
+        this.maxScrollY = Math.max(0, startY - this.scale.height + 100); 
 
-        // Scroll pomoću točkića miša
         this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
             this.cameras.main.scrollY += deltaY * 0.5;
             this.limitScroll();
         });
 
-        // Scroll pomoću strelica ↑ ↓
         this.input.keyboard.on("keydown-UP", () => {
             this.cameras.main.scrollY -= 30;
             this.limitScroll();
@@ -91,14 +83,12 @@ export default class GlossaryScene extends MenuScene {
             this.limitScroll();
         });
 
-        // ESC za povratak u meni
         this.input.keyboard.on("keydown-ESC", () => {
             this.scene.start("main-menu");
         });
     }
 
     limitScroll() {
-        // Ograničava kretanje kamere da ne ide izvan sadržaja
         this.cameras.main.scrollY = Phaser.Math.Clamp(this.cameras.main.scrollY, 0, this.maxScrollY);
     }
 }

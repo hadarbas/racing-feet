@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import menuBackground from "@assets/menu-background.png"; // Učitaj pozadinsku sliku
-import lockIcon from "@assets/lock-icon.png"; // Ikona ključa
-import unlockIcon from "@assets/unlock-icon.png"; // Ikona ključa
+import menuBackground from "@assets/menu-background.png"; 
+import lockIcon from "@assets/lock-icon.png";
+import unlockIcon from "@assets/unlock-icon.png";
 
 export default class LevelDetailsScene extends Phaser.Scene {
     constructor() {
@@ -9,25 +9,22 @@ export default class LevelDetailsScene extends Phaser.Scene {
     }
     
     init(data) {
-        this.data = data.levelData || {}; // Podaci o nivou iz baze
+        this.data = data.levelData || {}; 
     }
 
     preload() {
-        // Učitaj pozadinsku sliku i ikonu ključa
         this.load.image('menu-background', menuBackground);
         this.load.image('lock-icon', lockIcon);
         this.load.image('unlock-icon', unlockIcon);
     }
 
     create() {
-        // Postavi pozadinsku sliku
         this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'menu-background')
             .setDepth(-1)
-            .setTint(0x04040, 0x000040, 0x004000, 0x404040); // Prilagodi veličinu ekranu
+            .setTint(0x04040, 0x000040, 0x004000, 0x404040); 
 
         const { name, difficulty, order_id, instructions, lock } = this.data;
 
-        // Prikaz detalja nivoa sa centriranim tekstom
         this.add.text(this.cameras.main.width / 2, 100, `Level: ${name}`, { 
             fontSize: "32px", 
             fill: "#fff", 
@@ -52,7 +49,7 @@ export default class LevelDetailsScene extends Phaser.Scene {
             fill: "#fff", 
             wordWrap: { width: 700 }, 
             align: "center", 
-            lineSpacing: 30 // Povećanje razmaka između redova
+            lineSpacing: 30 
         }).setOrigin(0.5);
 
         let lockText = lock ? "Locked" : "Unlocked";
@@ -62,19 +59,16 @@ export default class LevelDetailsScene extends Phaser.Scene {
             align: "center" 
         }).setOrigin(0.5);
 
-        // Ako je nivo zaključan, prikaži ikonu ključa
         if (lock) {
-            // Postavi ikonu ključa
             this.add.image(this.cameras.main.width / 2+80, 330, 'lock-icon')
-                .setScale(0.05) // Smanji ikonu da bi stala u ekran
+                .setScale(0.05) 
                 .setOrigin(0.5);
         } else {
             this.add.image(this.cameras.main.width / 2+90, 330, 'unlock-icon')
-                .setScale(0.05) // Smanji ikonu da bi stala u ekran
+                .setScale(0.05) 
                 .setOrigin(0.5);
         }
 
-        // Play Button
         let playButton = this.add.text(this.cameras.main.width / 2, 400, "Play", { 
             fontSize: "28px", 
             fill: "#0f0", 
@@ -89,7 +83,6 @@ export default class LevelDetailsScene extends Phaser.Scene {
             this.scene.start("train-2", { data: this.data });
         });
 
-        // Return Button
         let returnButton = this.add.text(this.cameras.main.width / 2, 460, "Return", { 
             fontSize: "28px", 
             fill: "#fff", 
@@ -101,32 +94,27 @@ export default class LevelDetailsScene extends Phaser.Scene {
             .setInteractive();
 
         returnButton.on("pointerdown", () => {
-            this.scene.start("train"); // Vrati se na listu levela
+            this.scene.start("train"); 
         });
 
-        // Dodaj tekstualne upute pored dugmadi
-        // "Press Enter to Play" pored dugmeta Play
         this.add.text(this.cameras.main.width / 2 + 150, 400, "Press Enter to Play", {
             fontSize: "18px",
-            fill: "#ff0", // Žuta boja
+            fill: "#ff0", 
             align: "left"
         }).setOrigin(0.5);
 
-        // "Press ESC to Return" pored dugmeta Return
         this.add.text(this.cameras.main.width / 2 + 170, 460, "Press ESC to Return", {
             fontSize: "18px",
-            fill: "#ff0", // Žuta boja
+            fill: "#ff0", 
             align: "left"
         }).setOrigin(0.5);
 
-        // Dodaj funkcionalnost za Enter dugme
         this.input.keyboard.on("keydown-ENTER", () => {
-            this.scene.start("train-2", { data: this.data }); // Početak nove scene
+            this.scene.start("train-2", { data: this.data }); 
         });
 
-        // Dodaj funkcionalnost za ESC dugme
         this.input.keyboard.on("keydown-ESC", () => {
-            this.scene.start("train"); // Vrati se na listu levela
+            this.scene.start("train"); 
         });
     }
 }

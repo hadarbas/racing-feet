@@ -4,7 +4,7 @@ import { getDocument, getDocuments, deleteDocument } from "shared/services/fireb
 export default class SelectRecordedExerciseScene extends MenuScene {
   exercises;
   deleteKey;
-  selectedExercise = null; // 🔹 Holds the selected item
+  selectedExercise = null; 
   adminMode = localStorage.getItem("name") === "admin";
 
   constructor() {
@@ -27,11 +27,11 @@ export default class SelectRecordedExerciseScene extends MenuScene {
     if (!confirmDelete) return;
 
     try {
-      await deleteDocument("exercise", this.selectedExercise); // Delete exercise from database
+      await deleteDocument("exercise", this.selectedExercise); 
       console.log(`Exercise '${this.selectedExercise}' has been deleted.`);
 
       alert(`Exercise '${this.selectedExercise}' deleted successfully.`);
-      this.scene.start("recorded-exercises"); // Return user to the main menu
+      this.scene.start("recorded-exercises"); 
     } catch (error) {
       console.error("  Error deleting exercise:", error);
       alert("  An error occurred while deleting the exercise.");
@@ -70,7 +70,7 @@ export default class SelectRecordedExerciseScene extends MenuScene {
       this.categories = levels.map(level => level.id);
       this.items = [...this.categories];
 
-      // 🔹 Set the first item as selected
+      
       if (this.items.length > 0) {
         this.selectedExercise = this.items[0];
       }
