@@ -18,6 +18,9 @@ export default class RecorderScene extends SteppedScene {
   init(params) {
     super.init(params);
     this.recording = [];
+    this.bestGreen = -Infinity;      
+    this.indexBestGreen = null;      
+    this.timeLastRelease = null;     
   }
 
   handleStep_start(pedals) {
@@ -38,36 +41,38 @@ export default class RecorderScene extends SteppedScene {
 
   timeLastRelease;
   indexLastFullGreen;
-  handleStep_record({time, green, red, blue}) {
+  handleStep_record({ time, green, red, blue }) {
     if (time >= this.maxTime) {
+      const spliceIndex = (this.indexBestGreen !== null && this.indexBestGreen !== undefined)
+                            ? this.indexBestGreen
+                            : 0;
+      this.recording = this.recording.slice(spliceIndex);
       this.currentStep = 'save';
       return;
     }
-
-    this.setPrompt(`[b]${(time).toFixed(2)}[/b] seconds`);
-
-    this.recording.push({
-      time,
-      green,
-      red,
-      blue,
-    });
+  
+    this.setPrompt(`[b]${time.toFixed(2)}[/b] seconds`);
+  
+    this.recording.push({ time, green, red, blue });
     this.updateCurve();
-
-    if (!(green > 0.01 || red > 0.01 || blue > 0.01)) {
-      if (!this.timeLastRelease) {
+  
+    if (green > 0.01 || red > 0.01 || blue > 0.01) {
+      this.timeLastRelease = null;
+      if (green > this.bestGreen) {
+        this.bestGreen = green;
+        this.indexBestGreen = this.recording.length - 1;
+      }
+    } else {
+      if (this.timeLastRelease === null) {
         this.timeLastRelease = time;
       } else if (time - this.timeLastRelease >= 3) {
-        this.recording.splice(this.indexLastFullGreen, this.recording.length - this.indexLastFullGreen);
+        const spliceIndex = (this.indexBestGreen !== null && this.indexBestGreen !== undefined)
+                              ? this.indexBestGreen
+                              : 0;
+        this.recording = this.recording.slice(spliceIndex);
         this.updateCurve();
         this.currentStep = 'save';
       }
-    } else {
-      this.timeLastRelease = undefined;
-    }
-    
-    if (green >= 1) {
-      this.indexLastFullGreen = this.recording.length;
     }
   }
 
