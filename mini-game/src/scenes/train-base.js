@@ -56,6 +56,33 @@ export default class TrainExerciseScene extends SteppedScene {
     this.scorePerCorner = [];
     this.distancesInOneCorner = [];
     this.recording = [];
+    this.currentScore=0;
+
+    this.currentScore = 0;
+     this.lastCornerScore = 0;
+ 
+     this.corner = false
+     this.cornerEnd = false
+     this.scorePerCorner = []
+     this.distancesInOneCorner = []
+ 
+     this.distanceBonus = 5
+     this.askedForSave = false
+
+switch(params.levelDifficulty) {
+       case "easy":
+         this.levelDifficultyPoints = 30;
+         break;
+       case "normal":
+         this.levelDifficultyPoints = 20;
+         break;
+       case "hard":
+         this.levelDifficultyPoints = 10;
+         break;
+       default:
+         this.levelDifficultyPoints = 0;
+     }
+    
   }
 
   process = (data, key) => data
@@ -236,6 +263,7 @@ export default class TrainExerciseScene extends SteppedScene {
     this.greenPlayer.setFillStyle(0x00ff00, greenDist < 0.2 && greenData > 0 ? 1 - greenDist : 0.2);
     this.redPlayer.setFillStyle(0xff0000, redDist < 0.2 && redData > 0 ? 1 - redDist : 0.2);
     this.bluePlayer.setFillStyle(0x0000ff, blueDist < 0.2 && blueData > 0 ? 1 - blueDist : 0.2);
+  
 }
 
 getLastPointForKey(data, key) {
@@ -294,8 +322,8 @@ processPoint(point, key) {
 
     this.setPrompt([
       ['over_release_1', 'over_release_2', 'over_menu'].includes(step)
-    ? `Score: [b]${this.getStarRating(this.currentScore)}[/b]`
-    : `Score: [b]${this.currentScore}[/b]`,
+          ? `Score: [b]${this.getStarRating(this.currentScore)} (${Math.round(this.currentScore)})[/b]`
+          : `Score: [b]${Math.round(this.currentScore)}[/b]`,  
       {
           start: 'Please press [b]full gas[/b] to start\n'
               + 'or [b]full brake[/b] to return to main menu',
