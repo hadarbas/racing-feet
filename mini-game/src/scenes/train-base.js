@@ -53,7 +53,9 @@ export default class TrainExerciseScene extends SteppedScene {
 
   init(params) {
     super.init(params);
-    
+    this.scorePerCorner = [];
+    this.distancesInOneCorner = [];
+    this.recording = [];
   }
 
   process = (data, key) => data
