@@ -48,7 +48,7 @@ export default class HighScoreLevel extends MenuScene {
         .sort((a, b) => b.score - a.score);
 
       this.items = levels
-        .map(level => `${level.user} - ${this.getStarRating(level.score)}`)
+        .map(level => `${level.user} - ${this.getStarRating(level.score)} (${Math.round(level.score)})`)
         .slice(0, 10);
 
       console.log("Sorted Levels:", this.items);
