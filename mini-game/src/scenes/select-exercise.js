@@ -118,7 +118,7 @@ export default class SelectExerciseScene extends MenuScene {
       });
 
       this.items = this.adminMode
-        ? levelsWithOrder.map(level => `${level.level} - ${this.getStarRating(level.score)}`)
+        ? levelsWithOrder.map(level => `${level.level} - ${this.getStarRating(level.score)} (${Math.round(level.score)})`)
         : filteredLevels;
 
       this.createItems(32);
