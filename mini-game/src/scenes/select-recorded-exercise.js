@@ -19,24 +19,30 @@ export default class SelectRecordedExerciseScene extends MenuScene {
 
   async deleteCurrentExercise() {
     if (!this.selectedExercise) {
-      console.error("  No exercise selected for deletion.");
-      return;
+        console.error("No exercise selected for deletion.");
+        return;
+    }
+
+    if (this.selectedExercise === "Default") {
+        alert("This exercise is a default exercise which cannot be deleted.");
+        return;
     }
 
     const confirmDelete = confirm(`Are you sure you want to delete the exercise '${this.selectedExercise}'?`);
     if (!confirmDelete) return;
 
     try {
-      await deleteDocument("exercise", this.selectedExercise); 
-      console.log(`Exercise '${this.selectedExercise}' has been deleted.`);
+        await deleteDocument("exercise", this.selectedExercise); 
+        console.log(`Exercise '${this.selectedExercise}' has been deleted.`);
 
-      alert(`Exercise '${this.selectedExercise}' deleted successfully.`);
-      this.scene.start("recorded-exercises"); 
+        alert(`Exercise '${this.selectedExercise}' deleted successfully.`);
+        this.scene.start("recorded-exercises"); 
     } catch (error) {
-      console.error("  Error deleting exercise:", error);
-      alert("  An error occurred while deleting the exercise.");
+        console.error("Error deleting exercise:", error);
+        alert("An error occurred while deleting the exercise.");
     }
-  }
+}
+
 
   init(params) {
     this.firstItemIndex = 0;
@@ -63,29 +69,33 @@ export default class SelectRecordedExerciseScene extends MenuScene {
 
   async loadExercises() {
     try {
-      const levelsSnapshot = await getDocuments("exercise");
+        const levelsSnapshot = await getDocuments("exercise");
+        const levels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      const levels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const userName = localStorage.getItem("name");
 
-      this.categories = levels.map(level => level.id);
-      this.items = [...this.categories];
+        this.categories = levels
+            .filter(level => this.adminMode || level.id !== "Default")
+            .map(level => level.id);
 
-      
-      if (this.items.length > 0) {
-        this.selectedExercise = this.items[0];
-      }
+        this.items = [...this.categories];
 
-      this.createItems(20);
+        if (this.items.length > 0) {
+            this.selectedExercise = this.items[0];
+        }
 
-      this.time.delayedCall(50, () => {
-        this.cameras.main.setVisible(true);
-      });
+        this.createItems(20);
+
+        this.time.delayedCall(50, () => {
+            this.cameras.main.setVisible(true);
+        });
 
     } catch (error) {
-      console.error("  Error loading exercises:", error);
-      return [];
+        console.error("Error loading exercises:", error);
+        return [];
     }
-  }
+}
+
 
   async handleItemClick(name) {
     try {
