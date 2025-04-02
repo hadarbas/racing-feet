@@ -30,7 +30,7 @@ export default class TrainExerciseScene extends SteppedScene {
   xPadding = this.baseWidth / 3;
   xWidth;
   yPadding = this.baseHeight / 4;
-  yHeight = this.baseHeight / 3;
+  yHeight = this.baseHeight / 5;
   maxTime;
   recording;
 
@@ -161,12 +161,6 @@ switch(params.levelDifficulty) {
     if (red >= 1) {
       this.currentStep = 'over_release_2';
     }
-
-   /*setTimeout(() => {
-      console.log("Prošlo je 3 sekunde!");
-      this.currentStep = 'play';
-  }, 3000);*/
-
   }
 
   handleStep_play({time, green, red, blue}) {
@@ -175,7 +169,6 @@ switch(params.levelDifficulty) {
         this.scoreScrollDirection = -100;
         return;
     }
-
 
     this.recording.push({time, green, red, blue});
 
