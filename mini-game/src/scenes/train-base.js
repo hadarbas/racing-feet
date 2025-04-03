@@ -43,7 +43,10 @@ export default class TrainExerciseScene extends SteppedScene {
 
   adminMode;
 
-
+  hasPlayedReplay = false; 
+  replayStartTime = 0;     
+  replayEndedText;         
+  replayButton;            
 
   preload() {
     super.preload();
@@ -82,7 +85,6 @@ switch(params.levelDifficulty) {
        default:
          this.levelDifficultyPoints = 0;
      }
-    
   }
 
   process = (data, key) => data
@@ -129,6 +131,28 @@ switch(params.levelDifficulty) {
       .setStrokeStyle(this.playerSize * 0.2, 0x000080, 0.5);
 
     this.prompt.setPosition(...this.fit(600, 950));
+
+        this.replayEndedText = this.add.text(...this.fit(600, 100), '').setOrigin(0.5).setVisible(false);
+    
+        this.replayButton = this.add.text(...this.fit(600, 150), '🔁 Replay again', {
+          fontSize: '28px',
+          color: '#00ff00',
+          backgroundColor: '#000000',
+          padding: { x: 10, y: 5 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true })
+        .setVisible(false)
+        .on('pointerdown', () => {
+          this.hasPlayedReplay = false;
+          this.replayStartTime = this.time.now;
+          this.replayEndedText.setVisible(false);
+          this.replayButton.setVisible(false);
+        });
+        this.replayButton.setScrollFactor(0); 
+        this.replayButton.setDepth(1000);    
+        this.replayEndedText.setScrollFactor(0);
+        this.replayEndedText.setDepth(1000);
   }
 
   getStarRating(score) {
@@ -277,8 +301,6 @@ processPoint(point, key) {
   );
 }
 
-
-
   handleStep_over_release_1(pedals) {
     super.handleStepRelease(pedals, 'over_menu');
   }
@@ -287,22 +309,88 @@ processPoint(point, key) {
     super.handleStepRelease(pedals, 'main_menu');
   }
 
-  handleStep_over_menu({green, red}) {
-    const [minX, _] = this.fit(this.xPadding, 0);
-    const [maxX, __] = this.fit(this.xWidth - this.xPadding * 0.8, 0);
-    if (this.cameras.main.scrollX <= minX) {
-      this.scoreScrollDirection = maxX * 0.003;
-    } else if (this.cameras.main.scrollX >= maxX) {
-      this.scoreScrollDirection = maxX * -0.05;
+  handleStep_over_menu({ green, red }) {
+    if (!this.hasPlayedReplay) {
+      this.replayStartTime = this.time.now;
+      this.hasPlayedReplay = true;
+      this.replayEndedText.setVisible(false);
+      this.replayButton.setVisible(false);
     }
-    this.cameras.main.scrollX += this.scoreScrollDirection;
-
+  
+    const elapsed = (this.time.now - this.replayStartTime) / 1000;
+    const totalTime = this.maxTime;
+  
+    if (elapsed <= totalTime) {
+      // Umesto da pozivaš handleStep_play() (koja dodaje nove zapise),
+      // pozovi replayStep koja iscrtava replay bez dodavanja novih podataka
+      this.replayStep(elapsed);
+    } else {
+      this.replayEndedText.setVisible(true);
+      this.replayButton.setVisible(true);
+      this.cameras.main.scrollX = 0;
+    }
+  
     if (green > 0.6) {
       this.currentStep = 'retry';
     } else if (red > 0.2) {
       this.currentStep = 'over_release_2';
     }
   }
+  
+  replayStep(time) {
+    // Ne dodajemo nove zapise u this.recording – koristimo postojeći niz
+    const relevantRecords = this.recording.filter(p => p.time <= time);
+    const trailWidth = this.radius * 0.05;
+    
+    // Očisti trail grafike pre iscrtavanja
+    this.greenTrail.clear();
+    this.redTrail.clear();
+    this.blueTrail.clear();
+  
+    // Iscrtaj replay putanju na osnovu relevantRecords
+    if (relevantRecords.length >= 2) {
+      for (let i = 1; i < relevantRecords.length; i++) {
+        const prevGreenPoint = this.processPoint(relevantRecords[i - 1], 'green');
+        const lastGreenPoint = this.processPoint(relevantRecords[i], 'green');
+        if (prevGreenPoint && lastGreenPoint) {
+          this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
+        }
+        // Ako je potrebno, isto za red i blue:
+        const prevRedPoint = this.processPoint(relevantRecords[i - 1], 'red');
+        const lastRedPoint = this.processPoint(relevantRecords[i], 'red');
+        if (prevRedPoint && lastRedPoint) {
+          this.drawRaceCurve(this.redTrail, prevRedPoint, lastRedPoint, 0xff0000, trailWidth);
+        }
+        const prevBluePoint = this.processPoint(relevantRecords[i - 1], 'blue');
+        const lastBluePoint = this.processPoint(relevantRecords[i], 'blue');
+        if (prevBluePoint && lastBluePoint) {
+          this.drawRaceCurve(this.blueTrail, prevBluePoint, lastBluePoint, 0x0000ff, trailWidth);
+        }
+      }
+    }
+  
+    // Ažuriraj pozicije igrača na osnovu poslednjeg zapisa
+    const lastRecord = relevantRecords[relevantRecords.length - 1];
+    if (lastRecord) {
+      this.greenPlayer.setPosition(...this.fit(
+        this.xPadding + lastRecord.time / this.maxTime * this.xWidth,
+        this.yPadding + (1 - lastRecord.green) * this.yHeight
+      ));
+      this.redPlayer.setPosition(...this.fit(
+        this.xPadding + lastRecord.time / this.maxTime * this.xWidth,
+        this.yPadding + (1 - lastRecord.red) * this.yHeight
+      ));
+      this.bluePlayer.setPosition(...this.fit(
+        this.xPadding + lastRecord.time / this.maxTime * this.xWidth,
+        this.yPadding + (1 - lastRecord.blue) * this.yHeight
+      ));
+    }
+  
+    // Ažuriraj pomeranje kamere
+    const [scrollX, dummy] = this.fit(time / this.maxTime * this.xWidth, 0);
+    this.cameras.main.scrollX = scrollX;
+  }
+  
 
   handleStep_retry() {
     this.scene.restart();
@@ -327,8 +415,6 @@ processPoint(point, key) {
   ]
   .filter(line => !!line)
   .join('\n'));
-  
-  
   }
 
   getReplayPedals(time) {
@@ -362,16 +448,16 @@ processPoint(point, key) {
         const p0 = points[i - 1];
         const p1 = points[i];
 
-        if (p0[1] >= maxY && p1[1] >= maxY) {
-            continue;
-        }
+        // if (p0[1] >= maxY && p1[1] >= maxY) {
+        //     continue;
+        // }
 
         const dy = Math.abs(p1[1] - p0[1]);
         const isFlat = dy < radius * 0.5;
 
         if (isFlat) {
             flatCount++;
-            maskGraphics.lineTo(p1[0], p1[1]); // Ravne linije crtamo normalno
+            maskGraphics.lineTo(p1[0], p1[1]); 
         } else {
             nonFlatCount++;
 
@@ -390,9 +476,6 @@ processPoint(point, key) {
     graphics.setMask(mask);
 }
 
-
-
-
   drawRaceCurve(graphics, p0, p1, color, radius) {
     if (!p0 || !p1) {
         return; 
@@ -405,7 +488,6 @@ processPoint(point, key) {
     graphics.strokePath();
 }
 
-
 score;
   get currentScore() {
     return this.score;
@@ -414,9 +496,6 @@ score;
     this.score = score;
     super.updateStep();
   }
-
-
-
 }
 
 const SECONDS_PER_SCREEN = 10;
