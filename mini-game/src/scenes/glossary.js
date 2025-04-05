@@ -9,11 +9,11 @@ export default class GlossaryScene extends MenuScene {
     create() {
         super.create();
 
-        let startY = 70; 
+        let startY = 70;
 
         this.content = this.add.container(0, 0);
 
-        this.content.add(this.add.text(100, startY, "Glossary - Controls Guide", { fontSize: "30px", fill: "#fff" }));
+        this.content.add(this.add.text(100, startY, "Glossary - Controls Guide", { fontSize: this.getFontSize(), fill: "#fff" }));
         startY += 50;
 
         const controls = [
@@ -27,12 +27,12 @@ export default class GlossaryScene extends MenuScene {
         ];
 
         controls.forEach((text, index) => {
-            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: "24px", fill: "#ddd" }));
+            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
         });
 
         startY += controls.length * 40 + 40;
 
-        this.content.add(this.add.text(100, startY, "Glossary - Line Colors", { fontSize: "30px", fill: "#fff" }));
+        this.content.add(this.add.text(100, startY, "Glossary - Line Colors", { fontSize: this.getFontSize(), fill: "#fff" }));
         startY += 50;
 
         const colors = [
@@ -42,12 +42,12 @@ export default class GlossaryScene extends MenuScene {
         ];
 
         colors.forEach((text, index) => {
-            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: "24px", fill: "#ddd" }));
+            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
         });
 
         startY += colors.length * 40 + 40;
 
-        this.content.add(this.add.text(100, startY, "Glossary - Scoring System", { fontSize: "30px", fill: "#fff" }));
+        this.content.add(this.add.text(100, startY, "Glossary - Scoring System", { fontSize: this.getFontSize(), fill: "#fff" }));
         startY += 50;
 
         const scoring = [
@@ -59,14 +59,14 @@ export default class GlossaryScene extends MenuScene {
         ];
 
         scoring.forEach((text, index) => {
-            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: "24px", fill: "#ddd" }));
+            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
         });
 
         startY += scoring.length * 40 + 40;
 
-        this.content.add(this.add.text(100, startY, "Press ESC to return", { fontSize: "20px", fill: "#ff0" }));
+        this.content.add(this.add.text(100, startY, "Press ESC to return", { fontSize: this.getFontSize(), fill: "#ff0" }));
 
-        this.maxScrollY = Math.max(0, startY - this.scale.height + 100); 
+        this.maxScrollY = Math.max(0, startY - this.scale.height + 100);
 
         this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY) => {
             this.cameras.main.scrollY += deltaY * 0.5;
@@ -86,6 +86,24 @@ export default class GlossaryScene extends MenuScene {
         this.input.keyboard.on("keydown-ESC", () => {
             this.scene.start("main-menu");
         });
+
+        window.addEventListener('resize', this.resizeText.bind(this));
+
+        this.resizeText();
+    }
+
+    getFontSize() {
+        const baseFontSize = 30;
+        const scaleFactor = this.scale.width / 1920; 
+        return `${baseFontSize * scaleFactor}px`; 
+    }
+
+    resizeText() {
+        if (this.content && this.content.list) {
+            this.content.list.forEach(textObject => {
+                textObject.setStyle({ fontSize: this.getFontSize() });
+            });
+        }
     }
 
     limitScroll() {
