@@ -14,6 +14,7 @@ import HighScore from './scenes/high-score';
 import HighScoreLevel from './scenes/high-score-level';
 import GlossaryScene from './scenes/glossary';
 import LevelDetailsScene from "./scenes/level-details-scene";
+import UsersResultsScene from './scenes/users-results';
 
 const config = {
     type: Phaser.WEBGL,
@@ -25,13 +26,17 @@ const config = {
     },
     scene: [MainMenuScene, SelectControllerScene, SetupScene,
         TrainScene, RecorderScene,
-        SelectCategoryScene, SelectExerciseScene, LevelDetailsScene, SelectRecordedExerciseScene, TrainExerciseScene, HighScore, HighScoreLevel, GlossaryScene],
+        SelectCategoryScene, SelectExerciseScene, LevelDetailsScene, SelectRecordedExerciseScene, TrainExerciseScene, HighScore, HighScoreLevel, GlossaryScene,
+    UsersResultsScene],
     plugins: {
         global: [{
             key: 'rexBBCodeTextPlugin',
             plugin: BBCodeTextPlugin,
             start: true
         }]},
+        dom: {
+            createContainer: true
+          }
 };
 
 const game = new Phaser.Game(config);

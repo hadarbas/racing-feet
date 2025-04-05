@@ -13,6 +13,10 @@ export default class MainMenuScene extends MenuScene {
         menuOptions.splice(1, 0, "Record a new exercise"); 
     } 
 
+    if (playerName === "admin") {
+      menuOptions.push("Users and their results");
+  }
+
     if (playerName !== null){
       menuOptions.splice(menuOptions.length,0, "Logout")
     }
@@ -84,7 +88,12 @@ async create() {
     if (item === "Glossary") {
       this.scene.start("glossary");
       return;
-  }
+    }
+
+    if (item === "Users and their results") {
+      this.scene.start("users-results");
+      return;
+    }
 
     if (this.scene.get(sceneKey)) {
       this.scene.start(sceneKey);
