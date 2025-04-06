@@ -29,7 +29,6 @@ export default class TrainScene extends BaseTrainScene {
     this.red = this.getPointsForKey(this.data, 'red');
     this.blue = this.getPointsForKey(this.data, 'blue');
 
-    // Inicijalizuj replay zapis – koristimo ga samo za replay, bez dodatnog push-ovanja tokom replaya.
     this.recording = [];
   }
 
@@ -41,7 +40,6 @@ export default class TrainScene extends BaseTrainScene {
     });
     this.askedForSave = false;
 
-    // Ako su potrebni UI elementi za replay, kreiramo ih:
     this.replayEndedText = this.add.text(...this.fit(600, 100), '').setOrigin(0.5).setVisible(false);
     this.replayButton = this.add.text(...this.fit(600, 150), '🔁 Replay again', {
       fontSize: '28px',
@@ -64,8 +62,6 @@ export default class TrainScene extends BaseTrainScene {
     this.replayEndedText.setDepth(1000);
   }
 
-  // U ovoj metodi sada se koristi replay logika – umesto da se u replay modu dodaju novi zapisi,
-  // replayStep() se poziva da iscrta replay koristeći postojeće zapise u this.recording.
   handleStep_over_menu({ green, red }) {
     if (!this.hasPlayedReplay) {
       this.replayStartTime = this.time.now;
@@ -85,7 +81,6 @@ export default class TrainScene extends BaseTrainScene {
       this.cameras.main.scrollX = 0;
     }
 
-    // Ostatak logike za čuvanje rezultata
     if (!this.askedForSave) {
       this.askedForSave = true;
       if (!this.oldScore) {
@@ -136,7 +131,6 @@ export default class TrainScene extends BaseTrainScene {
       }
     }
 
-    // Ažuriraj pozicije igrača na osnovu poslednjeg zapisa
     const lastRecord = relevantRecords[relevantRecords.length - 1];
     if (lastRecord) {
       this.greenPlayer.setPosition(...this.fit(

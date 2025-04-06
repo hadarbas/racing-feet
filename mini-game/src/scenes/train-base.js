@@ -187,101 +187,94 @@ switch(params.levelDifficulty) {
     }
   }
 
-  handleStep_play({time, green, red, blue}) {
-    if (time >= this.maxTime) {
-        this.currentStep = 'over_release_1';
-        this.scoreScrollDirection = -100;
-        return;
+  handleStep_play({ time, green, red, blue }) {
+  if (time >= this.maxTime) {
+    this.currentStep = 'over_release_1';
+    this.scoreScrollDirection = -100;
+    return;
+  }
+
+  this.recording.push({ time, green, red, blue });
+
+  const lastGreenPoint = this.getLastPointForKey(this.recording, 'green');
+  const prevGreenPoint = this.getSecondLastPointForKey(this.recording, 'green');
+  const lastRedPoint = this.getLastPointForKey(this.recording, 'red');
+  const prevRedPoint = this.getSecondLastPointForKey(this.recording, 'red');
+  const lastBluePoint = this.getLastPointForKey(this.recording, 'blue');
+  const prevBluePoint = this.getSecondLastPointForKey(this.recording, 'blue');
+
+  const trailWidth = this.radius * 0.05;
+
+  if (prevGreenPoint && lastGreenPoint) {
+    this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
+  }
+  if (prevRedPoint && lastRedPoint) {
+    this.drawRaceCurve(this.redTrail, prevRedPoint, lastRedPoint, 0xff0000, trailWidth);
+  }
+  if (prevBluePoint && lastBluePoint) {
+    this.drawRaceCurve(this.blueTrail, prevBluePoint, lastBluePoint, 0x0000ff, trailWidth);
+  }
+
+  const posX = this.xPadding + (time / this.maxTime) * this.xWidth;
+  this.greenPlayer.setPosition(...this.fit(posX, this.yPadding + (1 - green) * this.yHeight));
+  this.redPlayer.setPosition(...this.fit(posX, this.yPadding + (1 - red) * this.yHeight));
+  this.bluePlayer.setPosition(...this.fit(posX, this.yPadding + (1 - blue) * this.yHeight));
+
+  const [scrollX] = this.fit((time / this.maxTime) * this.xWidth, 0);
+  this.cameras.main.scrollX = scrollX;
+
+  let greenData = 0, redData = 0, blueData = 0;
+  for (let i = 0; i < this.data.length; i++) {
+    const p1 = this.data[i];
+    if (p1.time >= time) {
+      greenData = p1.green;
+      redData = p1.red;
+      blueData = p1.blue;
+      break;
     }
+  }
 
-    this.recording.push({time, green, red, blue});
+  const greenDist = Math.abs(green - greenData);
+  const redDist = Math.abs(red - redData);
+  const blueDist = Math.abs(blue - blueData);
 
-    const lastGreenPoint = this.getLastPointForKey(this.recording, 'green');
-    
-    const prevGreenPoint = this.getSecondLastPointForKey(this.recording, 'green');
-    const lastRedPoint = this.getLastPointForKey(this.recording, 'red');
-    const prevRedPoint = this.getSecondLastPointForKey(this.recording, 'red');
-    
-    const lastBluePoint = this.getLastPointForKey(this.recording, 'blue');
-    const prevBluePoint = this.getSecondLastPointForKey(this.recording, 'blue');
-    
-    const trailWidth = this.radius * 0.05;
-    
-    if (prevGreenPoint && lastGreenPoint) {
-        this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
-    }
-    
-    if (prevRedPoint && lastRedPoint) {
-        this.drawRaceCurve(this.redTrail, prevRedPoint, lastRedPoint, 0xff0000, trailWidth);
-    }
-    
-    if (prevBluePoint && lastBluePoint) {
-        this.drawRaceCurve(this.blueTrail, prevBluePoint, lastBluePoint, 0x0000ff, trailWidth);
-    }
-
-    this.greenPlayer.setPosition(...this.fit(
-        this.xPadding + time / this.maxTime * this.xWidth,
-        this.yPadding + (1 - green) * this.yHeight
-    ));
-    this.redPlayer.setPosition(...this.fit(
-        this.xPadding + time / this.maxTime * this.xWidth,
-        this.yPadding + (1 - red) * this.yHeight
-    ));
-    this.bluePlayer.setPosition(...this.fit(
-        this.xPadding + time / this.maxTime * this.xWidth,
-        this.yPadding + (1 - blue) * this.yHeight
-    ));
-
-    const [scrollX, _] = this.fit(time / this.maxTime * this.xWidth, 0);
-    this.cameras.main.scrollX = scrollX;
-
-    let greenData = 0, redData = 0, blueData = 0;
-    for (let i = 0; i < this.data.length; i++) {
-        const p1 = this.data[i];
-        if (p1.time >= time) {
-            greenData = p1.green;
-            redData = p1.red;
-            blueData = p1.blue;
-            break;
-        }
-    }
-
-    const greenDist = Math.abs(green - greenData);
-    const redDist = Math.abs(red - redData);
-    const blueDist = Math.abs(blue - blueData);
-
-    if (greenData < 1 || redData > 0) {
-        this.corner = true;
-    } else if (greenData == 1 && redData == 0) {
-        if (this.corner) {
-            this.cornerEnd = true;
-            let sum = this.distancesInOneCorner.reduce((acc, val) => acc + val, 0);
-            let cornerScore = 100 - (sum / this.distancesInOneCorner.length * 100) + this.distanceBonus + this.levelDifficultyPoints;
-
-            if (cornerScore > 100) cornerScore = 100;
-            this.scorePerCorner.push(cornerScore);
-
-            this.lastCornerScore = Math.round(cornerScore);
-
-            this.distancesInOneCorner = [];
-
-            this.currentScore = Math.round(this.scorePerCorner.reduce((acc, val) => acc + val, 0) / this.scorePerCorner.length);
-            if (this.currentScore > 100) this.currentScore = 100;
-        } else {
-            this.cornerEnd = false;
-        }
-        this.corner = false;
-    }
+  if (greenData < 1 || redData > -1) {
+    this.corner = true;
+  } else if (greenData === 1 && redData === -1) {
     if (this.corner) {
-        if (greenData > 0) this.distancesInOneCorner.push(greenDist);
-        if (redData > 0) this.distancesInOneCorner.push(redDist);
-    }
+      this.cornerEnd = true;
+      const sum = this.distancesInOneCorner.reduce((acc, val) => acc + val, 0);
+      let cornerScore = 100 - ((sum / this.distancesInOneCorner.length) * 100)
+                        + this.distanceBonus + this.levelDifficultyPoints;
+      if (cornerScore > 100) cornerScore = 100;
 
-    this.greenPlayer.setFillStyle(0x00ff00, greenDist < 0.2 && greenData > 0 ? 1 - greenDist : 0.2);
-    this.redPlayer.setFillStyle(0xff0000, redDist < 0.2 && redData > 0 ? 1 - redDist : 0.2);
-    this.bluePlayer.setFillStyle(0x0000ff, blueDist < 0.2 && blueData > 0 ? 1 - blueDist : 0.2);
-  
+      this.scorePerCorner.push(cornerScore);
+      this.lastCornerScore = Math.round(cornerScore);
+      this.distancesInOneCorner = [];
+
+      const totalScore = this.scorePerCorner.reduce((acc, val) => acc + val, 0);
+      this.currentScore = Math.round(totalScore / this.scorePerCorner.length);
+      if (this.currentScore > 100) this.currentScore = 100;
+    } else {
+      this.cornerEnd = false;
+    }
+    this.corner = false;
+  }
+
+  if (this.corner) {
+    if (greenData < 1) this.distancesInOneCorner.push(greenDist);
+    if (redData > -1) this.distancesInOneCorner.push(redDist);
+  }
+
+  const greenAlpha = (greenDist < 0.2 && greenData > -1 ? 1 - greenDist : 0.2);
+  const redAlpha = (redDist < 0.2 && redData > -1 ? 1 - redDist : 0.2);
+  const blueAlpha = (blueDist < 0.2 && blueData > -1 ? 1 - blueDist : 0.2);
+
+  this.greenPlayer.setFillStyle(0x00ff00, greenAlpha);
+  this.redPlayer.setFillStyle(0xff0000, redAlpha);
+  this.bluePlayer.setFillStyle(0x0000ff, blueAlpha);
 }
+
 
 getLastPointForKey(data, key) {
   if (!data || data.length === 0) return null;
@@ -321,8 +314,6 @@ processPoint(point, key) {
     const totalTime = this.maxTime;
   
     if (elapsed <= totalTime) {
-      // Umesto da pozivaš handleStep_play() (koja dodaje nove zapise),
-      // pozovi replayStep koja iscrtava replay bez dodavanja novih podataka
       this.replayStep(elapsed);
     } else {
       this.replayEndedText.setVisible(true);
@@ -338,16 +329,13 @@ processPoint(point, key) {
   }
   
   replayStep(time) {
-    // Ne dodajemo nove zapise u this.recording – koristimo postojeći niz
     const relevantRecords = this.recording.filter(p => p.time <= time);
     const trailWidth = this.radius * 0.05;
     
-    // Očisti trail grafike pre iscrtavanja
     this.greenTrail.clear();
     this.redTrail.clear();
     this.blueTrail.clear();
   
-    // Iscrtaj replay putanju na osnovu relevantRecords
     if (relevantRecords.length >= 2) {
       for (let i = 1; i < relevantRecords.length; i++) {
         const prevGreenPoint = this.processPoint(relevantRecords[i - 1], 'green');
@@ -355,7 +343,6 @@ processPoint(point, key) {
         if (prevGreenPoint && lastGreenPoint) {
           this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
         }
-        // Ako je potrebno, isto za red i blue:
         const prevRedPoint = this.processPoint(relevantRecords[i - 1], 'red');
         const lastRedPoint = this.processPoint(relevantRecords[i], 'red');
         if (prevRedPoint && lastRedPoint) {
@@ -369,7 +356,6 @@ processPoint(point, key) {
       }
     }
   
-    // Ažuriraj pozicije igrača na osnovu poslednjeg zapisa
     const lastRecord = relevantRecords[relevantRecords.length - 1];
     if (lastRecord) {
       this.greenPlayer.setPosition(...this.fit(
@@ -386,7 +372,6 @@ processPoint(point, key) {
       ));
     }
   
-    // Ažuriraj pomeranje kamere
     const [scrollX, dummy] = this.fit(time / this.maxTime * this.xWidth, 0);
     this.cameras.main.scrollX = scrollX;
   }
@@ -447,10 +432,6 @@ processPoint(point, key) {
     for (let i = 1; i < points.length; i++) {
         const p0 = points[i - 1];
         const p1 = points[i];
-
-        // if (p0[1] >= maxY && p1[1] >= maxY) {
-        //     continue;
-        // }
 
         const dy = Math.abs(p1[1] - p0[1]);
         const isFlat = dy < radius * 0.5;
