@@ -186,95 +186,129 @@ switch(params.levelDifficulty) {
       this.currentStep = 'over_release_2';
     }
   }
-
   handleStep_play({ time, green, red, blue }) {
-  if (time >= this.maxTime) {
-    this.currentStep = 'over_release_1';
-    this.scoreScrollDirection = -100;
-    return;
-  }
-
-  this.recording.push({ time, green, red, blue });
-
-  const lastGreenPoint = this.getLastPointForKey(this.recording, 'green');
-  const prevGreenPoint = this.getSecondLastPointForKey(this.recording, 'green');
-  const lastRedPoint = this.getLastPointForKey(this.recording, 'red');
-  const prevRedPoint = this.getSecondLastPointForKey(this.recording, 'red');
-  const lastBluePoint = this.getLastPointForKey(this.recording, 'blue');
-  const prevBluePoint = this.getSecondLastPointForKey(this.recording, 'blue');
-
-  const trailWidth = this.radius * 0.05;
-
-  if (prevGreenPoint && lastGreenPoint) {
-    this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
-  }
-  if (prevRedPoint && lastRedPoint) {
-    this.drawRaceCurve(this.redTrail, prevRedPoint, lastRedPoint, 0xff0000, trailWidth);
-  }
-  if (prevBluePoint && lastBluePoint) {
-    this.drawRaceCurve(this.blueTrail, prevBluePoint, lastBluePoint, 0x0000ff, trailWidth);
-  }
-
-  const posX = this.xPadding + (time / this.maxTime) * this.xWidth;
-  this.greenPlayer.setPosition(...this.fit(posX, this.yPadding + (1 - green) * this.yHeight));
-  this.redPlayer.setPosition(...this.fit(posX, this.yPadding + (1 - red) * this.yHeight));
-  this.bluePlayer.setPosition(...this.fit(posX, this.yPadding + (1 - blue) * this.yHeight));
-
-  const [scrollX] = this.fit((time / this.maxTime) * this.xWidth, 0);
-  this.cameras.main.scrollX = scrollX;
-
-  let greenData = 0, redData = 0, blueData = 0;
-  for (let i = 0; i < this.data.length; i++) {
-    const p1 = this.data[i];
-    if (p1.time >= time) {
-      greenData = p1.green;
-      redData = p1.red;
-      blueData = p1.blue;
-      break;
+    if (time >= this.maxTime) {
+      if (this.corner) {
+        const sum = this.distancesInOneCorner.reduce((acc, val) => acc + val, 0);
+        const avgDeviation = this.distancesInOneCorner.length > 0 ? sum / this.distancesInOneCorner.length : 0;
+        let cornerScore = 100 - (avgDeviation * 100) + this.distanceBonus + this.levelDifficultyPoints;
+        if (cornerScore > 100) cornerScore = 100;
+        
+        this.scorePerCorner.push(cornerScore);
+        this.lastCornerScore = Math.round(cornerScore);
+        const totalScore = this.scorePerCorner.reduce((acc, val) => acc + val, 0);
+        this.currentScore = Math.round(totalScore / this.scorePerCorner.length);
+        if (this.currentScore > 100) this.currentScore = 100;
+  
+        this.corner = false;
+        this.cornerEnd = true;
+        this.distancesInOneCorner = [];
+      }
+      this.currentStep = 'over_release_1';
+      this.scoreScrollDirection = -100;
+      return;
     }
-  }
+  
+    this.recording.push({ time, green, red, blue });
+  
+    const lastGreenPoint = this.getLastPointForKey(this.recording, 'green');
+    const prevGreenPoint = this.getSecondLastPointForKey(this.recording, 'green');
+    const lastRedPoint = this.getLastPointForKey(this.recording, 'red');
+    const prevRedPoint = this.getSecondLastPointForKey(this.recording, 'red');
+    const lastBluePoint = this.getLastPointForKey(this.recording, 'blue');
+    const prevBluePoint = this.getSecondLastPointForKey(this.recording, 'blue');
+  
+    const trailWidth = this.radius * 0.05;
+  
+    if (prevGreenPoint && lastGreenPoint) {
+      this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
+    }
+    if (prevRedPoint && lastRedPoint) {
+      this.drawRaceCurve(this.redTrail, prevRedPoint, lastRedPoint, 0xff0000, trailWidth);
+    }
+    if (prevBluePoint && lastBluePoint) {
+      this.drawRaceCurve(this.blueTrail, prevBluePoint, lastBluePoint, 0x0000ff, trailWidth);
+    }
+  
+    const posX = this.xPadding + (time / this.maxTime) * this.xWidth;
+    this.greenPlayer.setPosition(...this.fit(posX, this.yPadding + (1 - green) * this.yHeight));
+    this.redPlayer.setPosition(...this.fit(posX, this.yPadding + (1 - red) * this.yHeight));
+    this.bluePlayer.setPosition(...this.fit(posX, this.yPadding + (1 - blue) * this.yHeight));
+  
+    const [scrollX] = this.fit((time / this.maxTime) * this.xWidth, 0);
+    this.cameras.main.scrollX = scrollX;
+  
+    let greenData = -1, redData = -1, blueData = 0;
+    for (let i = 0; i < this.data.length; i++) {
+      const p1 = this.data[i];
+      if (p1.time >= time) {
+        greenData = p1.green;
+        redData = p1.red;
+        blueData = p1.blue;
+        break;
+      }
+    }
+  
+    const greenDist = Math.abs(green - greenData);
+    const redDist = Math.abs(red - redData);
+    const blueDist = Math.abs(blue - blueData);
+  
+    if (!this.corner && (green < 1 || red > -1)) {
+      this.corner = true;
+      this.cornerEnd = false;
+      this.distancesInOneCorner = [];
+    }
 
-  const greenDist = Math.abs(green - greenData);
-  const redDist = Math.abs(red - redData);
-  const blueDist = Math.abs(blue - blueData);
-
-  if (greenData < 1 || redData > -1) {
-    this.corner = true;
-  } else if (greenData === 1 && redData === -1) {
     if (this.corner) {
-      this.cornerEnd = true;
+      if (greenData < 1) this.distancesInOneCorner.push(greenDist);
+      if (redData > -1) this.distancesInOneCorner.push(redDist);
+    }
+ 
+    if (this.corner && green === 1 && red === -1) {
       const sum = this.distancesInOneCorner.reduce((acc, val) => acc + val, 0);
-      let cornerScore = 100 - ((sum / this.distancesInOneCorner.length) * 100)
-                        + this.distanceBonus + this.levelDifficultyPoints;
+      const avgDeviation = this.distancesInOneCorner.length > 0 ? sum / this.distancesInOneCorner.length : 0;
+      let cornerScore = 100 - (avgDeviation * 100) + this.distanceBonus + this.levelDifficultyPoints;
       if (cornerScore > 100) cornerScore = 100;
-
+      
       this.scorePerCorner.push(cornerScore);
       this.lastCornerScore = Math.round(cornerScore);
-      this.distancesInOneCorner = [];
-
       const totalScore = this.scorePerCorner.reduce((acc, val) => acc + val, 0);
       this.currentScore = Math.round(totalScore / this.scorePerCorner.length);
       if (this.currentScore > 100) this.currentScore = 100;
-    } else {
-      this.cornerEnd = false;
+      
+      this.corner = false;
+      this.cornerEnd = true;
+      this.distancesInOneCorner = [];
     }
-    this.corner = false;
+    
+    let progressiveScore;
+    if (this.corner) {
+
+      const sumPartial = this.distancesInOneCorner.reduce((acc, val) => acc + val, 0);
+      const avgPartial = this.distancesInOneCorner.length > 0 ? sumPartial / this.distancesInOneCorner.length : 0;
+      let partialScore = 100 - (avgPartial * 100) + this.distanceBonus + this.levelDifficultyPoints;
+      if (partialScore > 100) partialScore = 100;
+      
+      const numCompleted = this.scorePerCorner.length;
+      if (numCompleted > 0) {
+        const sumCompleted = this.scorePerCorner.reduce((acc, val) => acc + val, 0);
+        progressiveScore = Math.round((sumCompleted + partialScore) / (numCompleted + 1));
+      } else {
+        progressiveScore = Math.round(partialScore);
+      }
+    } else {
+      progressiveScore = this.currentScore;
+    }
+    this.currentScore = progressiveScore;
+  
+    const greenAlpha = (greenDist < 0.2 && greenData > -1 ? 1 - greenDist : 0.2);
+    const redAlpha = (redDist < 0.2 && redData > -1 ? 1 - redDist : 0.2);
+    const blueAlpha = (blueDist < 0.2 && blueData > -1 ? 1 - blueDist : 0.2);
+  
+    this.greenPlayer.setFillStyle(0x00ff00, greenAlpha);
+    this.redPlayer.setFillStyle(0xff0000, redAlpha);
+    this.bluePlayer.setFillStyle(0x0000ff, blueAlpha);
   }
-
-  if (this.corner) {
-    if (greenData < 1) this.distancesInOneCorner.push(greenDist);
-    if (redData > -1) this.distancesInOneCorner.push(redDist);
-  }
-
-  const greenAlpha = (greenDist < 0.2 && greenData > -1 ? 1 - greenDist : 0.2);
-  const redAlpha = (redDist < 0.2 && redData > -1 ? 1 - redDist : 0.2);
-  const blueAlpha = (blueDist < 0.2 && blueData > -1 ? 1 - blueDist : 0.2);
-
-  this.greenPlayer.setFillStyle(0x00ff00, greenAlpha);
-  this.redPlayer.setFillStyle(0xff0000, redAlpha);
-  this.bluePlayer.setFillStyle(0x0000ff, blueAlpha);
-}
-
 
 getLastPointForKey(data, key) {
   if (!data || data.length === 0) return null;
