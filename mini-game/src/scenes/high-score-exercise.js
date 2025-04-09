@@ -1,14 +1,14 @@
 import MenuScene from "./menu";
 import { getDocuments } from "shared/services/firebase/db";
 
-export default class HighScoreLevel extends MenuScene {
+export default class HighScoreExercise extends MenuScene {
   exercises;
   deleteKey;
   selectedCategory;
   level;
 
   constructor() {
-    super([], "high-score-level");
+    super([], "high-score-exercise");
   }
 
   create() {
@@ -31,31 +31,31 @@ export default class HighScoreLevel extends MenuScene {
     this.items = [];
     this.itemHeight = 0;
     this.level = params.name;
-    this.loadLevelScores(this.level);
+    this.loadExerciseScores(this.level);
   }
 
   update() {
     super.update();
   }
 
-  async loadLevelScores(name) {
+  async loadExerciseScores(name) {
     try {
-      const levelsSnapshot = await getDocuments("user_levels");
+      const exerciseSnapshot = await getDocuments("user_exercises");
 
-      const levels = levelsSnapshot.docs
+      const exercises = exerciseSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(level => level.level === name)
+        .filter(ex => ex.exercise === name)
         .sort((a, b) => b.score - a.score);
 
-      this.items = levels
-        .map(level => `${level.user} - ${this.getStarRating(level.score)} (${Math.round(level.score)})`)
+      this.items = exercises
+        .map(ex => `${ex.user} - ${this.getStarRating(ex.score)} (${Math.round(ex.score)})`)
         .slice(0, 10);
 
-      console.log("Sorted Levels:", this.items);
+      console.log("Sorted Exercises:", this.items);
 
       if (this.items.length === 0) {
         const { width, height } = this.scale;
-        this.add.text(width / 2, height / 2, "There is not data for this level.", {
+        this.add.text(width / 2, height / 2, "There is not data for this exercise.", {
           fontSize: "24px",
           fill: "#fff"
         }).setOrigin(0.5);
@@ -65,9 +65,9 @@ export default class HighScoreLevel extends MenuScene {
           this.cameras.main.setVisible(true);
         });
       }
-
+      
     } catch (error) {
-      console.error("Greška pri učitavanju levela:", error);
+      console.error("Greška pri učitavanju exercise:", error);
       return [];
     }
   }
