@@ -15,6 +15,7 @@ import HighScoreLevel from './scenes/high-score-level';
 import GlossaryScene from './scenes/glossary';
 import LevelDetailsScene from "./scenes/level-details-scene";
 import UsersResultsScene from './scenes/users-results';
+import HighScoreExercise from './scenes/high-score-exercise'
 
 const config = {
     type: Phaser.WEBGL,
@@ -27,7 +28,7 @@ const config = {
     scene: [MainMenuScene, SelectControllerScene, SetupScene,
         TrainScene, RecorderScene,
         SelectCategoryScene, SelectExerciseScene, LevelDetailsScene, SelectRecordedExerciseScene, TrainExerciseScene, HighScore, HighScoreLevel, GlossaryScene,
-    UsersResultsScene],
+    UsersResultsScene, HighScoreExercise],
     plugins: {
         global: [{
             key: 'rexBBCodeTextPlugin',
