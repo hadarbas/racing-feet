@@ -34,6 +34,7 @@ export const loadCsvFile = async (file) => {
       const data = reader.result;
 
       const lines = data.split(/\r?\n/);
+     
       const lineSeparatorIndex = findBackwardsIndex(lines, line =>
         line
           .split(',')

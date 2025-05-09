@@ -50,12 +50,14 @@ function Import() {
     setIsLoading(true); // Set isLoading to true
 
     try {
-      const {meta, records} = await loadCsvFile(file);
+      var {meta, records} = await loadCsvFile(file);
 
       if (!meta) {
-        console.error('No metadata found');
+        /*console.error('No metadata found');
         alert('No metadata found');
-        return;
+        return;*/
+        meta = {}
+        meta.name = "Exercise"
       }
       setMeta(meta);
       const header = Object.keys(records[0]);
