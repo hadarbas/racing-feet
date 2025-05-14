@@ -7,12 +7,10 @@ import {
   MultiBrush,
 } from 'react-timeseries-charts';
 import {TimeSeries} from 'pondjs';
-import JsonView from 'react-json-view';
-import {JSONEditor} from 'react-json-editor-viewer';
 import Button from '@mui/joy/Button';
 import { importIRacerCSV } from '../../tools/iracer-importer';
 
-import { setDocument, serverTimestamp, getDocuments } from 'shared/services/firebase/db';
+import { setDocument, getDocuments } from 'shared/services/firebase/db';
 import '../../buffer';
 import 'react-virtualized/styles.css'; // only needs to be imported once
 
@@ -26,7 +24,7 @@ function Import() {
   const [samples, setSamples] = useState([]);
   const [columns, setColumns] = useState([]);
   const [fileName, setFileName] = useState('');
-  const [sampleCount, setSampleCount] = useState(0);
+  const [sampleCount] = useState(0);
   const sampleSeries = useMemo(() => {
     const result = new TimeSeries({
     name: fileName,
@@ -63,9 +61,32 @@ function Import() {
       const header = Object.keys(records[0]);
       const columns = header.map(name => ({name, label: makeLabel(name)}));
       setColumns(columns);
+
+      for (let i = 0; i < records.length; i++) {
+        const point = records[i];
+        const invalidFields = [];
+
+        if (point.SteeringWheelAngle < -1 || point.SteeringWheelAngle > 1) {
+          invalidFields.push(`SteeringWheelAngle (${point.SteeringWheelAngle})`);
+        }
+        if (point.Brake < -1 || point.Brake > 1) {
+          invalidFields.push(`Brake (${point.Brake})`);
+        }
+        if (point.Throttle < -1 || point.Throttle > 1) {
+          invalidFields.push(`Throttle (${point.Throttle})`);
+        }
+
+        if (invalidFields.length > 0) {
+          throw new Error(
+            `Line ${i + 1}: Value(s) out of range [-1, 1]: ${invalidFields.join(", ")}`
+          );
+        }
+      }
+
       setSamples(records);
       setFileName(file.name); 
     } catch (error) {
+      alert(error)
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -339,22 +360,6 @@ const handleFileUpload = (event) => {
 </SnapRight>
     </RowPane>
   </RootContainer>);
-}
-
-const isRelevantColumn = name =>
-  /time|raw|throttle|wheel|gear|brake|^(lat)$|^(lon)$|^(alt)$/i
-  .test(name)
-
-const convertSample = sample => sample && Object.fromEntries(
-  Object.entries(sample.toJSON())
-    .map(([key, {value}]) => [key, formatValue(value)])
-);
-
-function formatValue(value) {
-  if (typeof value === 'number' && !Number.isInteger(value)) {
-    return value.toFixed(2);
-  }
-  return value;
 }
 
 function makeLabel(name) {

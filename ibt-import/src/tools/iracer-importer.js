@@ -30,11 +30,31 @@ export const importIRacerCSV = (file, callback) => {
               SessionTime: parseFloat((index * (16.66 / 1000)).toFixed(6)),
             }));
 
-            console.log("Mapped Data:", mappedData); // Log za provjeru
+            for (let i = 0; i < mappedData.length; i++) {
+              const point = mappedData[i];
+              const invalidFields = [];
+
+              if (point.SteeringWheelAngle < -1 || point.SteeringWheelAngle > 1) {
+                invalidFields.push(`SteeringWheelAngle (${point.SteeringWheelAngle})`);
+              }
+              if (point.Brake < -1 || point.Brake > 1) {
+                invalidFields.push(`Brake (${point.Brake})`);
+              }
+              if (point.Throttle < -1 || point.Throttle > 1) {
+                invalidFields.push(`Throttle (${point.Throttle})`);
+              }
+
+              if (invalidFields.length > 0) {
+                throw new Error(
+                  `Line ${i + 1}: Value(s) out of range [-1, 1]: ${invalidFields.join(", ")}`
+                );
+              }
+            }
             callback(mappedData);
           },
           error: (err) => {
-            console.error("Greška pri parsiranju CSV-a:", err);
+            alert(err)
+            console.error(err);
           },
         });
       },
