@@ -18,6 +18,7 @@ import { loadCsvFile } from '../../tools/file-loader';
 import { useTimeRanges } from './useTimeRanges';
 
 import { RootContainer, TopPane, RowPane, SnapRight  } from './Import.styled';
+import { useEffect } from 'react';
 
 function Import() {
   const [isLoading, setIsLoading] = useState(false); // Add isLoading state
@@ -85,6 +86,22 @@ function Import() {
 
       setSamples(records);
       setFileName(file.name); 
+
+      const snapshot = await getDocuments("levels");
+      let maxOrderId = 0;
+  
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        console.log(data.name + ", Order ID: " + data.order_id)
+        if (typeof data.order_id === "number" && data.order_id > maxOrderId) {
+          maxOrderId = data.order_id;
+        }
+      });
+  
+      const nextOrderId = maxOrderId + 1;
+      setMeta(prev => ({ ...prev, orderId: nextOrderId }));
+      handleJsonChange("order_id", nextOrderId, null, { ...meta, orderId: nextOrderId });
+
     } catch (error) {
       alert(error)
       console.error(error);
@@ -92,6 +109,7 @@ function Import() {
       setIsLoading(false);
     }
   }, []);
+
   const handleRowData = useCallback(({index}) => {
     return samples[index];
   }, [samples]);
@@ -168,8 +186,6 @@ const handleFileUpload = (event) => {
     // Ovdje možeš proslediti mappedData u state ili level sistem igre
   });
 };
-
-
   
   const handleJsonChange = useCallback((key, value, parent, data) => {
     setMeta({
@@ -309,9 +325,9 @@ const handleFileUpload = (event) => {
 <input
   type="number"
   id="orderId"
-  min="1" // Ensures only positive numbers
-  step="1" // Ensures only whole numbers
-  value={meta.orderId ?? ""} // ✅ Ispravljeno
+  min="1" 
+  step="1" 
+  value={meta.orderId ?? ""} 
   onChange={(e) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value) && value > 0) {
