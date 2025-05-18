@@ -549,23 +549,36 @@ export default class SetupScene extends ResponsiveScene {
     };
   }
 
-  updatePedals() {
-    const {gas, brake, wheel} = this.getPedals();
+updatePedals() {
+  const inGasValue   = this.buttons.gas   != null ? this.getValue(this.buttons.gas)   : null;
+  const inBrakeValue = this.buttons.brake != null ? this.getValue(this.buttons.brake) : null;
+  const rawWheel     = this.getValue(this.buttons.wheel);
 
-    this.greenIndicator.setScale(gas);
-    this.redIndicator.setScale(brake);
+  const rawGas   = inGasValue   != null
+    ? Phaser.Math.Clamp(-inGasValue,   -1, 1)
+    : -1;
+  const rawBrake = inBrakeValue != null
+    ? Phaser.Math.Clamp(-inBrakeValue, -1, 1)
+    : -1;
 
-    // Za "wheel" dodatno mjenjate x poziciju po potrebi
-    this.blueIndicator
-      .setScale(wheel)
-      .setPosition(...this.fit(200 + 100 * wheel, 400));
+  const scaleGas   = Phaser.Math.Clamp((rawGas   + 1) / 2, 0, 1);
+  const scaleBrake = Phaser.Math.Clamp((rawBrake + 1) / 2, 0, 1);
 
-    this.pedalsText.setText(
-      `[b][color=green]${gas.toFixed(2)}[/color] ` +
-      `[color=red]${brake.toFixed(2)}[/color] ` +
-      `[color=blue]${wheel.toFixed(2)}[/color][/b]`
-    );
-  }
+  this.greenIndicator.setScale(scaleGas);
+  this.redIndicator  .setScale(scaleBrake);
+
+  const [baseX, baseY] = this.fit(200, 400);
+  this.blueIndicator
+    .setScale(rawWheel)
+    .setPosition(baseX + 100 * rawWheel, baseY);
+
+  this.pedalsText.setText(
+    `[b][color=green]${rawGas.toFixed(2)}[/color] ` +
+    `[color=red]${rawBrake.toFixed(2)}[/color] ` +
+    `[color=blue]${rawWheel.toFixed(2)}[/color][/b]`
+  );
+}
+
 
   handleGamepadConnected(pad) {
     console.debug('Connected', pad);

@@ -103,53 +103,78 @@ export default class TrainScene extends BaseTrainScene {
     }
   }
 
-  replayStep(time) {
-    const relevantRecords = this.recording.filter(p => p.time <= time);
-    const trailWidth = this.radius * 0.05;
+replayStep(time) {
+  const relevantRecords = this.recording.filter(p => p.time <= time);
+  const trailWidth = this.radius * 0.05;
 
-    if (this.greenTrail) this.greenTrail.clear();
-    if (this.redTrail) this.redTrail.clear();
-    if (this.blueTrail) this.blueTrail.clear();
+  if (this.greenTrail) this.greenTrail.clear();
+  if (this.redTrail)   this.redTrail.clear();
+  if (this.blueTrail)  this.blueTrail.clear();
 
-    if (relevantRecords.length >= 2) {
-      for (let i = 1; i < relevantRecords.length; i++) {
-        const prevGreenPoint = this.processPoint(relevantRecords[i - 1], 'green');
-        const lastGreenPoint = this.processPoint(relevantRecords[i], 'green');
-        if (prevGreenPoint && lastGreenPoint) {
-          this.drawRaceCurve(this.greenTrail, prevGreenPoint, lastGreenPoint, 0x008000, trailWidth);
-        }
-        const prevRedPoint = this.processPoint(relevantRecords[i - 1], 'red');
-        const lastRedPoint = this.processPoint(relevantRecords[i], 'red');
-        if (prevRedPoint && lastRedPoint) {
-          this.drawRaceCurve(this.redTrail, prevRedPoint, lastRedPoint, 0xff0000, trailWidth);
-        }
-        const prevBluePoint = this.processPoint(relevantRecords[i - 1], 'blue');
-        const lastBluePoint = this.processPoint(relevantRecords[i], 'blue');
-        if (prevBluePoint && lastBluePoint) {
-          this.drawRaceCurve(this.blueTrail, prevBluePoint, lastBluePoint, 0x0000ff, trailWidth);
-        }
+  if (relevantRecords.length >= 2) {
+    for (let i = 1; i < relevantRecords.length; i++) {
+      const prev = relevantRecords[i - 1];
+      const curr = relevantRecords[i];
+
+      if (this.green && prev.green != null && curr.green != null) {
+        const p0 = this.processPoint(prev, 'green');
+        const p1 = this.processPoint(curr, 'green');
+        if (p0 && p1) this.drawRaceCurve(this.greenTrail, p0, p1, 0x008000, trailWidth);
+      }
+
+      if (this.red && prev.red != null && curr.red != null) {
+        const p0 = this.processPoint(prev, 'red');
+        const p1 = this.processPoint(curr, 'red');
+        if (p0 && p1) this.drawRaceCurve(this.redTrail, p0, p1, 0xff0000, trailWidth);
+      }
+
+      if (this.blue && prev.blue != null && curr.blue != null) {
+        const p0 = this.processPoint(prev, 'blue');
+        const p1 = this.processPoint(curr, 'blue');
+        if (p0 && p1) this.drawRaceCurve(this.blueTrail, p0, p1, 0x0000ff, trailWidth);
       }
     }
+  }
 
-    const lastRecord = relevantRecords[relevantRecords.length - 1];
-    if (lastRecord) {
-      this.greenPlayer.setPosition(...this.fit(
-        this.xPadding + lastRecord.time / this.maxTime * this.xWidth,
-        this.yPadding + (1 - lastRecord.green) * this.yHeight
-      ));
-      this.redPlayer.setPosition(...this.fit(
-        this.xPadding + lastRecord.time / this.maxTime * this.xWidth,
-        this.yPadding + (1 - lastRecord.red) * this.yHeight
-      ));
-      this.bluePlayer.setPosition(...this.fit(
-        this.xPadding + lastRecord.time / this.maxTime * this.xWidth,
-        this.yPadding + (1 - lastRecord.blue) * this.yHeight
-      ));
+  const last = relevantRecords[relevantRecords.length - 1];
+  if (last) {
+    if (this.green && last.green != null) {
+      this.greenPlayer
+        .setVisible(true)
+        .setPosition(...this.fit(
+          this.xPadding + last.time / this.maxTime * this.xWidth,
+          this.yPadding + (1 - last.green) * this.yHeight
+        ));
+    } else {
+      this.greenPlayer.setVisible(false);
     }
 
-    const [scrollX, dummy] = this.fit(time / this.maxTime * this.xWidth, 0);
-    this.cameras.main.scrollX = scrollX;
+    if (this.red && last.red != null) {
+      this.redPlayer
+        .setVisible(true)
+        .setPosition(...this.fit(
+          this.xPadding + last.time / this.maxTime * this.xWidth,
+          this.yPadding + (1 - last.red) * this.yHeight
+        ));
+    } else {
+      this.redPlayer.setVisible(false);
+    }
+
+    if (this.blue && last.blue != null) {
+      this.bluePlayer
+        .setVisible(true)
+        .setPosition(...this.fit(
+          this.xPadding + last.time / this.maxTime * this.xWidth,
+          this.yPadding + (1 - last.blue) * this.yHeight
+        ));
+    } else {
+      this.bluePlayer.setVisible(false);
+    }
   }
+
+  const [scrollX] = this.fit(time / this.maxTime * this.xWidth, 0);
+  this.cameras.main.scrollX = scrollX;
+}
 
   async saveScore() {
     try {
