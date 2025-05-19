@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const RootContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 100px);
+  height: calc(100vh );
 `;
 
 export const Pane = styled.div`
@@ -19,6 +19,7 @@ const CentrablePane = styled(Pane)`
 export const RowPane = styled(CentrablePane)`
   flex-direction: row;
   flex: 1;
+  width: 100%;
 `;
 
 export const TopPane = styled(CentrablePane)`

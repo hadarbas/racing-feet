@@ -40,75 +40,63 @@ function Import() {
     return result;
   }, [samples, fileName]);
   const timeRanges = useTimeRanges(samples);
-  const [meta, setMeta] = useState({});
+  const [meta, setMeta] = useState({
+    name:    "",
+    difficulty: "",
+    orderId:   null,
+    instructions: "",
+    folderTag:    "",     
+    lock:      false,
+  });
 
-  const handleCsvChange = useCallback(async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+const handleCsvChange = useCallback(async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-    setIsLoading(true); // Set isLoading to true
+  setIsLoading(true);
+  try {
+    let { meta, records } = await loadCsvFile(file);
 
-    try {
-      var {meta, records} = await loadCsvFile(file);
-
-      if (!meta) {
-        /*console.error('No metadata found');
-        alert('No metadata found');
-        return;*/
-        meta = {}
-        meta.name = "Exercise"
-      }
-      setMeta(meta);
-      const header = Object.keys(records[0]);
-      const columns = header.map(name => ({name, label: makeLabel(name)}));
-      setColumns(columns);
-
-      for (let i = 0; i < records.length; i++) {
-        const point = records[i];
-        const invalidFields = [];
-
-        if (point.SteeringWheelAngle < -1 || point.SteeringWheelAngle > 1) {
-          invalidFields.push(`SteeringWheelAngle (${point.SteeringWheelAngle})`);
-        }
-        if (point.Brake < -1 || point.Brake > 1) {
-          invalidFields.push(`Brake (${point.Brake})`);
-        }
-        if (point.Throttle < -1 || point.Throttle > 1) {
-          invalidFields.push(`Throttle (${point.Throttle})`);
-        }
-
-        if (invalidFields.length > 0) {
-          throw new Error(
-            `Line ${i + 1}: Value(s) out of range [-1, 1]: ${invalidFields.join(", ")}`
-          );
-        }
-      }
-
-      setSamples(records);
-      setFileName(file.name); 
-
-      const snapshot = await getDocuments("levels");
-      let maxOrderId = 0;
-  
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        console.log(data.name + ", Order ID: " + data.order_id)
-        if (typeof data.order_id === "number" && data.order_id > maxOrderId) {
-          maxOrderId = data.order_id;
-        }
-      });
-  
-      const nextOrderId = maxOrderId + 1;
-      setMeta(prev => ({ ...prev, orderId: nextOrderId }));
-      handleJsonChange("order_id", nextOrderId, null, { ...meta, orderId: nextOrderId });
-
-    } catch (error) {
-      alert(error)
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+    if (!meta) {
+      meta = { name: "Exercise" };
     }
-  }, []);
+    setMeta(meta);
+
+    const header = Object.keys(records[0]);
+    const columns = header.map(name => ({ name, label: makeLabel(name) }));
+    setColumns(columns);
+
+    const clamp = v => Math.max(-1, Math.min(1, v));
+
+    const clamped = records.map(point => ({
+      ...point,
+      Brake:                clamp(parseFloat(point.Brake)),
+      Throttle:             clamp(parseFloat(point.Throttle)),
+      SteeringWheelAngle:   clamp(parseFloat(point.SteeringWheelAngle)),
+    }));
+
+    setSamples(clamped);
+    setFileName(file.name);
+
+    const snapshot = await getDocuments("levels");
+    let maxOrderId = 0;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (typeof data.order_id === "number" && data.order_id > maxOrderId) {
+        maxOrderId = data.order_id;
+      }
+    });
+    const nextOrderId = maxOrderId + 1;
+    setMeta(prev => ({ ...prev, orderId: nextOrderId }));
+    handleJsonChange("order_id", nextOrderId, null, { ...meta, orderId: nextOrderId });
+
+  } catch (error) {
+    alert(error);
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
 
   const handleRowData = useCallback(({index}) => {
     return samples[index];
@@ -116,65 +104,73 @@ function Import() {
   const columnMinWidth = 100;
   const [isSaving, setIsSaving] = useState(false); 
 
-  const handleUpload = useCallback(async () => {
-    setIsSaving(true);
-    try {
-      if (!samples.length) {
-          alert("No data to upload!");
-          setIsSaving(false);
-          return;
+const handleUpload = useCallback(async () => {
+  setIsSaving(true);
+
+  try {
+    if (!samples.length) {
+      alert("No data to upload!");
+      return;
+    }
+
+    const minTime = parseFloat(samples[0].SessionTime);
+    const data = samples.map(
+      ({ SessionTime, Brake, Throttle, SteeringWheelAngle }) => ({
+        time:  parseFloat(SessionTime) - minTime,
+        red:   parseFloat(Brake),
+        green: parseFloat(Throttle),
+        blue:  parseFloat(SteeringWheelAngle),
+      })
+    );
+
+    const levelsSnapshot     = await getDocuments("levels");
+    const existingOrderIds   = levelsSnapshot.docs.map(d => d.data().order_id);
+    if (existingOrderIds.includes(meta.orderId)) {
+      alert(`Order ID ${meta.orderId} already exists`);
+      return;
+    }
+
+    const docData = {
+      name:         meta.name,
+      difficulty:   meta.difficulty,
+      order_id:     meta.orderId,
+      instructions: meta.instructions,
+      folderTag:    meta.folderTag,
+      lock:         meta.lock,
+      data,
+    };
+    Object.keys(docData).forEach(key => {
+      if (docData[key] === undefined) {
+        delete docData[key];
       }
-  
-      const minTime = parseFloat(samples[0].SessionTime);
-      const data = samples.map(({ SessionTime, Brake, Throttle, SteeringWheelAngle }) => ({
-          time: parseFloat(SessionTime) - minTime,
-          red: parseFloat(Brake),
-          green: parseFloat(Throttle),
-          blue: parseFloat(SteeringWheelAngle),
-      }));
-  
-      const levelsSnapshot = await getDocuments("levels");
-      const existingOrderIds = levelsSnapshot.docs.map(doc => doc.data().order_id);
-  
-      if (existingOrderIds.includes(meta.orderId)) {
-          alert(`Order ID ${meta.orderId} already exists`);
-          return
-      }
-  
-      await setDocument(
-          { 
-              name: meta.name, 
-              difficulty: meta.difficulty, 
-              order_id: meta.orderId, 
-              instructions: meta.instructions, 
-              folderTag: meta.folderTag, 
-              lock: meta.lock,  
-              data 
-          }, 
-          "levels", 
-          meta.name
-      );
-  
-      console.log(`Level '${meta.name}' uploaded successfully with order_id: ${meta.orderId}`);
-  
-      const usersSnapshot = await getDocuments("users");
-      const users = usersSnapshot.docs.map(doc => doc.id); 
-  
-      const userLevelPromises = users.map(user => 
-          setDocument({ user, level: meta.name, score: 0 }, "user_levels", `${user}_${meta.name}`)
-      );
-  
-      await Promise.all(userLevelPromises); 
-  
-      alert(`Level '${meta.name}' uploaded and assigned to all users.`);
-  } catch (error) {
-      console.error("Error uploading level or assigning users:", error);
-      alert(error.message || "Failed to upload level and assign users.");
-  } finally {
-      setIsSaving(false);
+    });
+
+    await setDocument(docData, "levels", meta.name);
+    console.log(`Level '${meta.name}' uploaded successfully`);
+
+    const usersSnapshot = await getDocuments("users");
+    const users = usersSnapshot.docs.map(d => d.id);
+    await Promise.all(
+      users.map(user =>
+        setDocument(
+          { user, level: meta.name, score: 0 },
+          "user_levels",
+          `${user}_${meta.name}`
+        )
+      )
+    );
+
+    alert(`Level '${meta.name}' uploaded and assigned to all users.`);
   }
-  
+  catch (error) {
+    console.error("Error during upload:", error);
+    alert(error.message || "Failed to upload level and assign users.");
+  }
+  finally {
+    setIsSaving(false);
+  }
 }, [meta, samples]);
+
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
