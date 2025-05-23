@@ -1,31 +1,34 @@
-import {useState, useCallback, useMemo} from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import {Column, Table} from 'react-virtualized';
-import {
-  ChartContainer, LineChart, ChartRow, Charts, YAxis,
-  styler, Legend,
-  MultiBrush,
-} from 'react-timeseries-charts';
-import {TimeSeries} from 'pondjs';
 import Button from '@mui/joy/Button';
+import { TimeSeries } from 'pondjs';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  ChartContainer,
+  ChartRow, Charts,
+  Legend,
+  LineChart,
+  MultiBrush,
+  YAxis,
+  styler,
+} from 'react-timeseries-charts';
+import { Column, Table } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { importIRacerCSV } from '../../tools/iracer-importer';
 
-import { setDocument, getDocuments } from 'shared/services/firebase/db';
+import 'react-virtualized/styles.css';
+import { getDocuments, setDocument } from 'shared/services/firebase/db';
 import '../../buffer';
-import 'react-virtualized/styles.css'; // only needs to be imported once
 
 import { loadCsvFile } from '../../tools/file-loader';
 import { useTimeRanges } from './useTimeRanges';
 
-import { RootContainer, TopPane, RowPane, SnapRight  } from './Import.styled';
-import { useEffect } from 'react';
+import { RootContainer, RowPane, SnapRight, TopPane } from './Import.styled';
 
 function Import() {
-  const [isLoading, setIsLoading] = useState(false); // Add isLoading state
+  const [isLoading, setIsLoading] = useState(false); 
   const [samples, setSamples] = useState([]);
   const [columns, setColumns] = useState([]);
   const [fileName, setFileName] = useState('');
-  const [sampleCount] = useState(0);
+  const [sampleCount, setSampleCount] = useState(0);
   const sampleSeries = useMemo(() => {
     const result = new TimeSeries({
     name: fileName,
@@ -172,17 +175,51 @@ const handleUpload = useCallback(async () => {
 }, [meta, samples]);
 
 
-const handleFileUpload = (event) => {
+const handleFileUpload = useCallback(async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  importIRacerCSV(file, (mappedData) => {
-    console.log("Imported iRacer Data:", mappedData);
-    setSamples(mappedData); // Ažuriraj samples sa podacima
-    // Ovdje možeš proslediti mappedData u state ili level sistem igre
-  });
-};
-  
+  setIsLoading(true);
+  try {
+    importIRacerCSV(file, async (mappedData) => {
+      setSamples(mappedData);
+      setFileName(file.name);
+
+      const header = Object.keys(mappedData[0]);
+      setColumns(header.map(name => ({ name, label: makeLabel(name) })));
+
+      let newMeta = {
+        name: file.name.replace(/\.[^/.]+$/, ""),  
+        difficulty: "",
+        orderId: null,
+        instructions: "",
+        folderTag: "",
+        lock: false,
+      };
+
+      const snapshot = await getDocuments("levels");
+      let maxOrderId = 0;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (typeof data.order_id === "number" && data.order_id > maxOrderId) {
+          maxOrderId = data.order_id;
+        }
+      });
+      newMeta.orderId = maxOrderId + 1;
+
+      setMeta(newMeta);
+
+      setSampleCount(mappedData.length);
+    });
+  } catch (err) {
+    console.error(err);
+    alert(err);
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
+
+
   const handleJsonChange = useCallback((key, value, parent, data) => {
     setMeta({
       ...data,
