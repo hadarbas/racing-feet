@@ -24,210 +24,186 @@ import { useTimeRanges } from './useTimeRanges';
 import { RootContainer, RowPane, SnapRight, TopPane } from './Import.styled';
 
 function Import() {
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const [samples, setSamples] = useState([]);
   const [columns, setColumns] = useState([]);
   const [fileName, setFileName] = useState('');
   const [sampleCount, setSampleCount] = useState(0);
+  const [isRealCar, setIsRealCar] = useState(false);
+
+  const clamp = v => Math.max(-1, Math.min(1, v));
+
   const sampleSeries = useMemo(() => {
     const result = new TimeSeries({
-    name: fileName,
-    columns: ["time", "brake", "throttle", "wheel"],
-    points: samples.map((sample) => [
-      parseFloat(sample.SessionTime),
-      parseFloat(sample.Brake),
-      parseFloat(sample.Throttle),
-      parseFloat(sample.SteeringWheelAngle),
+      name: fileName,
+      columns: ["time", "brake", "throttle"],
+      points: samples.map(sample => [
+        parseFloat(sample.SessionTime),
+        parseFloat(sample.Brake),
+        parseFloat(sample.Throttle),
       ]),
     });
     return result;
   }, [samples, fileName]);
+
   const timeRanges = useTimeRanges(samples);
   const [meta, setMeta] = useState({
-    name:    "",
+    name: "",
     difficulty: "",
-    orderId:   null,
+    orderId: null,
     instructions: "",
-    folderTag:    "",     
-    lock:      false,
+    folderTag: "",
+    lock: false,
   });
 
-const handleCsvChange = useCallback(async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+  const handleCsvChange = useCallback(async event => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  setIsLoading(true);
-  try {
-    let { meta, records } = await loadCsvFile(file);
+    setIsLoading(true);
+    try {
+      let { meta: fileMeta, records } = await loadCsvFile(file);
+      if (!fileMeta) fileMeta = { name: 'Exercise' };
+      setMeta(fileMeta);
+      setIsRealCar(false);
 
-    if (!meta) {
-      meta = { name: "Exercise" };
+      // Uklanjamo volan iz kolona
+      const header = Object.keys(records[0]).filter(name => name !== 'SteeringWheelAngle');
+      setColumns(header.map(name => ({ name, label: makeLabel(name) })));
+
+      const clamped = records.map(pt => ({
+        SessionTime: pt.SessionTime,
+        Brake:       clamp(parseFloat(pt.Brake)),
+        Throttle:    clamp(parseFloat(pt.Throttle)),
+      }));
+      setSamples(clamped);
+      setFileName(file.name);
+
+      const snap = await getDocuments('levels');
+      let maxOrderId = 0;
+      snap.forEach(doc => {
+        const d = doc.data();
+        if (typeof d.order_id === 'number' && d.order_id > maxOrderId) {
+          maxOrderId = d.order_id;
+        }
+      });
+      const nextOrderId = maxOrderId + 1;
+      setMeta(prev => ({ ...prev, orderId: nextOrderId }));
+      handleJsonChange('order_id', nextOrderId, null, { ...fileMeta, orderId: nextOrderId });
+
+      setSampleCount(clamped.length);
+    } catch (err) {
+      console.error(err);
+      alert(err);
+    } finally {
+      setIsLoading(false);
     }
-    setMeta(meta);
+  }, []);
 
-    const header = Object.keys(records[0]);
-    const columns = header.map(name => ({ name, label: makeLabel(name) }));
-    setColumns(columns);
-
-    const clamp = v => Math.max(-1, Math.min(1, v));
-
-    const clamped = records.map(point => ({
-      ...point,
-      Brake:                clamp(parseFloat(point.Brake)),
-      Throttle:             clamp(parseFloat(point.Throttle)),
-      SteeringWheelAngle:   clamp(parseFloat(point.SteeringWheelAngle)),
-    }));
-
-    setSamples(clamped);
-    setFileName(file.name);
-
-    const snapshot = await getDocuments("levels");
-    let maxOrderId = 0;
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (typeof data.order_id === "number" && data.order_id > maxOrderId) {
-        maxOrderId = data.order_id;
-      }
-    });
-    const nextOrderId = maxOrderId + 1;
-    setMeta(prev => ({ ...prev, orderId: nextOrderId }));
-    handleJsonChange("order_id", nextOrderId, null, { ...meta, orderId: nextOrderId });
-
-  } catch (error) {
-    alert(error);
-    console.error(error);
-  } finally {
-    setIsLoading(false);
-  }
-}, []);
-
-  const handleRowData = useCallback(({index}) => {
-    return samples[index];
-  }, [samples]);
+  const handleRowData = useCallback(({ index }) => samples[index], [samples]);
   const columnMinWidth = 100;
-  const [isSaving, setIsSaving] = useState(false); 
+  const [isSaving, setIsSaving] = useState(false);
 
-const handleUpload = useCallback(async () => {
-  setIsSaving(true);
+  const handleFileUpload = useCallback(event => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  try {
-    if (!samples.length) {
-      alert("No data to upload!");
-      return;
-    }
-
-    const minTime = parseFloat(samples[0].SessionTime);
-    const data = samples.map(
-      ({ SessionTime, Brake, Throttle, SteeringWheelAngle }) => ({
-        time:  parseFloat(SessionTime) - minTime,
-        red:   parseFloat(Brake),
-        green: parseFloat(Throttle),
-        blue:  parseFloat(SteeringWheelAngle),
-      })
-    );
-
-    const levelsSnapshot     = await getDocuments("levels");
-    const existingOrderIds   = levelsSnapshot.docs.map(d => d.data().order_id);
-    if (existingOrderIds.includes(meta.orderId)) {
-      alert(`Order ID ${meta.orderId} already exists`);
-      return;
-    }
-
-    const docData = {
-      name:         meta.name,
-      difficulty:   meta.difficulty,
-      order_id:     meta.orderId,
-      instructions: meta.instructions,
-      folderTag:    meta.folderTag,
-      lock:         meta.lock,
-      data,
-    };
-    Object.keys(docData).forEach(key => {
-      if (docData[key] === undefined) {
-        delete docData[key];
-      }
-    });
-
-    await setDocument(docData, "levels", meta.name);
-    console.log(`Level '${meta.name}' uploaded successfully`);
-
-    const usersSnapshot = await getDocuments("users");
-    const users = usersSnapshot.docs.map(d => d.id);
-    await Promise.all(
-      users.map(user =>
-        setDocument(
-          { user, level: meta.name, score: 0 },
-          "user_levels",
-          `${user}_${meta.name}`
-        )
-      )
-    );
-
-    alert(`Level '${meta.name}' uploaded and assigned to all users.`);
-  }
-  catch (error) {
-    console.error("Error during upload:", error);
-    alert(error.message || "Failed to upload level and assign users.");
-  }
-  finally {
-    setIsSaving(false);
-  }
-}, [meta, samples]);
-
-
-const handleFileUpload = useCallback(async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  setIsLoading(true);
-  try {
-    importIRacerCSV(file, async (mappedData) => {
+    setIsLoading(true);
+    importIRacerCSV(file, async mappedData => {
+      setIsRealCar(true);
       setSamples(mappedData);
       setFileName(file.name);
 
-      const header = Object.keys(mappedData[0]);
+      // Izbacujemo volan iz kolona
+      const header = Object.keys(mappedData[0]).filter(name => name !== 'SteeringWheelAngle');
       setColumns(header.map(name => ({ name, label: makeLabel(name) })));
 
       let newMeta = {
-        name: file.name.replace(/\.[^/.]+$/, ""),  
-        difficulty: "",
-        orderId: null,
-        instructions: "",
-        folderTag: "",
-        lock: false,
+        name:        file.name.replace(/\.[^/.]+$/, ''),
+        difficulty:  '',
+        orderId:     null,
+        instructions:'',
+        folderTag:   '',
+        lock:        false,
       };
-
-      const snapshot = await getDocuments("levels");
+      const snapshot = await getDocuments('levels');
       let maxOrderId = 0;
       snapshot.forEach(doc => {
-        const data = doc.data();
-        if (typeof data.order_id === "number" && data.order_id > maxOrderId) {
-          maxOrderId = data.order_id;
+        const d = doc.data();
+        if (typeof d.order_id === 'number' && d.order_id > maxOrderId) {
+          maxOrderId = d.order_id;
         }
       });
       newMeta.orderId = maxOrderId + 1;
-
       setMeta(newMeta);
 
       setSampleCount(mappedData.length);
-    });
-  } catch (err) {
-    console.error(err);
-    alert(err);
-  } finally {
-    setIsLoading(false);
-  }
-}, []);
-
-
-  const handleJsonChange = useCallback((key, value, parent, data) => {
-    setMeta({
-      ...data,
-      [key]: value,
+      setIsLoading(false);
     });
   }, []);
 
-  return (<RootContainer>
+  const handleUpload = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      if (!samples.length) { alert('No data to upload!'); return; }
+      const minTime = parseFloat(samples[0].SessionTime);
+
+      const dataForFirebase = samples.map(pt => {
+        const t = parseFloat(pt.SessionTime) - minTime;
+        if (isRealCar) {
+          return {
+            time:  t,
+            red:   clamp(2 * pt.Brake    - 1),
+            green: clamp(2 * pt.Throttle - 1),
+          };
+        } else {
+          return {
+            time:  t,
+            red:   parseFloat(pt.Brake),
+            green: parseFloat(pt.Throttle),
+          };
+        }
+      });
+
+      const levelsSnap = await getDocuments('levels');
+      const existingIds = levelsSnap.docs.map(d => d.data().order_id);
+      if (existingIds.includes(meta.orderId)) {
+        alert(`Order ID ${meta.orderId} already exists`);
+        return;
+      }
+
+      const docData = {
+        name:         meta.name,
+        difficulty:   meta.difficulty,
+        order_id:     meta.orderId,
+        instructions: meta.instructions,
+        folderTag:    meta.folderTag,
+        lock:         meta.lock,
+        data:         dataForFirebase,
+      };
+      Object.keys(docData).forEach(k => docData[k] === undefined && delete docData[k]);
+
+      await setDocument(docData, 'levels', meta.name);
+      const usersSnap = await getDocuments('users');
+      const users = usersSnap.docs.map(d => d.id);
+      await Promise.all(users.map(u =>
+        setDocument({ user: u, level: meta.name, score: 0 }, 'user_levels', `${u}_${meta.name}`)
+      ));
+      alert(`Level '${meta.name}' uploaded and assigned to all users.`);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Failed to upload.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [meta, samples, isRealCar]);
+
+  const handleJsonChange = useCallback((key, value, parent, data) => {
+    setMeta({ ...data, [key]: value });
+  }, []);
+
+  return (
+  <RootContainer>
     <TopPane>
     
     <label>Real Car Data&nbsp;
@@ -276,7 +252,7 @@ const handleFileUpload = useCallback(async (event) => {
               <LineChart
                 axis="y"
                 series={sampleSeries}
-                columns={["brake", "throttle", "wheel"]}
+                columns={["brake", "throttle", /*"wheel"*/]}
                 style={STYLE}
               />
               <MultiBrush
@@ -296,7 +272,7 @@ const handleFileUpload = useCallback(async (event) => {
         categories={[
           { key: "brake", label: "Brake" },
           { key: "throttle", label: "Throttle" },
-          { key: "wheel", label: "Wheel" },
+          // { key: "wheel", label: "Wheel" },
         ]}
     />)}
 
@@ -401,10 +377,7 @@ const handleFileUpload = useCallback(async (event) => {
   <option value="false">False</option>
 </select>
 <br/>
-
-
   </div>
-  
   )}
 </SnapRight>
     </RowPane>
@@ -419,7 +392,7 @@ function makeLabel(name) {
 const STYLE = styler([
   {key: "brake", color: "red", width: 1},
   {key: "throttle", color: "green", width: 1},
-  {key: "wheel", color: "black", width: 1},
+  // {key: "wheel", color: "black", width: 1},
 ]);
 
 export default Import;
