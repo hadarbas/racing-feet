@@ -41,7 +41,8 @@ export default class RecorderScene extends SteppedScene {
 
   timeLastRelease;
   indexLastFullGreen;
-  handleStep_record({ time, green, red, blue }) {
+
+  handleStep_record({ time, green, red/*, blue*/ }) {
     if (time >= this.maxTime) {
       const spliceIndex = (this.indexBestGreen !== null && this.indexBestGreen !== undefined)
                             ? this.indexBestGreen
@@ -53,10 +54,10 @@ export default class RecorderScene extends SteppedScene {
   
     this.setPrompt(`[b]${time.toFixed(2)}[/b] seconds`);
   
-    this.recording.push({ time, green, red, blue });
+    this.recording.push({ time, green, red/*, blue*/ });
     this.updateCurve();
   
-    if (green > 0.01 || red > 0.01 || blue > 0.01) {
+    if (green > -1 || red > -1 /*|| blue > 0.01*/) {
       this.timeLastRelease = null;
       if (green > this.bestGreen) {
         this.bestGreen = green;
@@ -88,7 +89,7 @@ export default class RecorderScene extends SteppedScene {
     this.setPrompt('[i]Saving ...[/i]');
   }
 
-  handleStep_trigger_main_menu({time, green, red, blue}) {
+  handleStep_trigger_main_menu({time, green, red/*, blue*/}) {
     const endTime = this.recording[this.recording.length - 1].time;
 
     this.setPrompt(`Done ([b]${(endTime).toFixed(2)}[/b] seconds)\n`
@@ -113,7 +114,7 @@ export default class RecorderScene extends SteppedScene {
       return;
     }
 
-    const colors = ['red', 'green', 'blue'];
+    const colors = ['red', 'green'/*, 'blue'*/];
     const xPadding = this.baseWidth / 3;
     const xWidth = this.baseWidth - 2 * xPadding;
     const yPadding = 0.25 * this.baseHeight;
@@ -133,9 +134,9 @@ export default class RecorderScene extends SteppedScene {
         ])
     );
     
-    this.graphics.clear();
-    this.graphics.lineStyle(3, 0x0000ff, 0.5);
-    this.drawCurve(curves.blue);
+    // this.graphics.clear();
+    // this.graphics.lineStyle(3, 0x0000ff, 0.5);
+    // this.drawCurve(curves.blue);
     this.graphics.lineStyle(3, 0x00ff00, 0.7);
     this.drawCurve(curves.green);
     this.graphics.lineStyle(3, 0xff0000, 1);
