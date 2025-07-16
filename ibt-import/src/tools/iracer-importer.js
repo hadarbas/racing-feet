@@ -21,14 +21,14 @@ export const importIRacerCSV = (file, callback) => {
           complete: (result) => {
             const mappedData = result.data.map((row, index) => {
               // const rawSteering = parseFloat(row["Steeringangle"]?.trim()) || 0;
-              const percent = parseFloat(row["Brake bias"]?.trim().replace("%", "")) || 0;
-              const rawBrake = Math.max(-1, Math.min(1, (percent / 100) * 2 - 1));
+              const percent = parseFloat(row["F brake pressure"]?.trim().replace("%", "")) || 0;
+              const rawBrake =  percent / 25;
 
               const rawThrottle = (parseFloat(row["F88 PPSA"]?.trim()) || 0) / 100;
 
               return {
                 // SteeringWheelAngle: clamp(rawSteering), // volan više ne čitamo
-                Brake:    rawBrake,
+                Brake:    clamp(rawBrake),
                 Throttle: clamp(rawThrottle),
                 SessionTime: parseFloat((index * (16.66 / 1000)).toFixed(6)),
               };

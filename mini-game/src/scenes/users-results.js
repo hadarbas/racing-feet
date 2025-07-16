@@ -1,9 +1,9 @@
 import MenuScene from "./menu";
 import { getDocuments } from "shared/services/firebase/db";
 
-export default class UsersResultsScene extends MenuScene {
+export default class UsersResultsSceneNonValid extends MenuScene {
   constructor() {
-    super([], "users-results");
+    super([], "users-results-non-valid");
     this.results = [];
     this.filteredResults = [];
     this.currentPage = 0;

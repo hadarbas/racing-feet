@@ -16,6 +16,13 @@ export default class TrainScene extends BaseTrainScene {
 
   init(params) {
     super.init(params);
+    if (params.data.instructions){
+    alert(params.data.instructions)
+    } else {
+      alert("There are no instructions for this level!")
+    }
+
+    console.log(params.data.instructions)
     this.name = params.data.name;
     this.data = params.data.data;
     this.oldScore = params.oldScore;

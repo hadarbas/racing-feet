@@ -10,7 +10,6 @@ export default class TrainExerciseScene extends BaseTrainScene {
     console.log("Received data:", params.data);
     this.name = params.name;
     this.data = params.data;
-    console.log("Received data:", params.data);
     this.oldScore = params.oldScore;
 
     this.maxTime = Math.max(...this.data.map(({time}) => time));

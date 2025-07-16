@@ -14,7 +14,7 @@ import HighScore from './scenes/high-score';
 import HighScoreLevel from './scenes/high-score-level';
 import GlossaryScene from './scenes/glossary';
 import LevelDetailsScene from "./scenes/level-details-scene";
-import UsersResultsScene from './scenes/users-results';
+import UsersResultsScene from './scenes/user-results-v2';
 import HighScoreExercise from './scenes/high-score-exercise'
 
 const config = {
@@ -33,8 +33,8 @@ const config = {
     },
     scene: [MainMenuScene, SelectControllerScene, SetupScene,
         TrainScene, RecorderScene,
-        SelectCategoryScene, SelectExerciseScene, LevelDetailsScene, SelectRecordedExerciseScene, TrainExerciseScene, HighScore, HighScoreLevel, GlossaryScene,
-    UsersResultsScene, HighScoreExercise],
+        SelectCategoryScene, SelectExerciseScene, LevelDetailsScene, SelectRecordedExerciseScene, TrainExerciseScene, HighScore, HighScoreLevel,
+        GlossaryScene, UsersResultsScene, HighScoreExercise],
     plugins: {
         global: [{
             key: 'rexBBCodeTextPlugin',
