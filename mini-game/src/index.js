@@ -22,6 +22,12 @@ const config = {
     parent: 'phaser-example',
     width: window.innerWidth,
     height: Math.round(window.innerWidth * 9 / 16),
+    /*scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        //width: 3840,
+        //height: 2160
+    },*/
     input: {
         gamepad: true
     },

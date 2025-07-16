@@ -271,32 +271,32 @@ export default class HighScore extends MenuScene {
 
   async handleItemClick(name) {
     try {
-      console.log(`Dohvatam level '${name}'...`);
+      console.log(`Fetching level '${name}'...`);
 
       const levelDoc = await getDocument("levels", name);
 
       if (!levelDoc.exists()) {
-        console.error(`Level '${name}' ne postoji!`);
-        alert(`Level '${name}' nije pronađen.`);
+        console.error(`Level '${name}' not found!`);
+        alert(`Level '${name}' not found.`);
         return;
       }
 
       const levelData = levelDoc.data();
-      console.log(`Level '${name}' pronađen:`, levelData);
+      console.log(`Level '${name}' found:`, levelData);
 
       this.scene.start('high-score-level', { name });
     } catch (error) {
-      console.error("Greška pri dohvaćanju levela:", error);
+      console.error("Error during fetch level:", error);
       alert("Check console for error.");
     }
   }
 
   async handleExerciseClick(name) {
     try {
-      console.log(`Dohvatam exercise '${name}'...`);
+      console.log(`Fetching exercise '${name}'...`);
       this.scene.start('high-score-exercise', { name });
     } catch (error) {
-      console.error("Greška pri dohvaćanju exercise:", error);
+      console.error("Error:", error);
       alert("Check console for error.");
     }
   }

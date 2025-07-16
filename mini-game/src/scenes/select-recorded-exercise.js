@@ -14,34 +14,47 @@ export default class SelectRecordedExerciseScene extends MenuScene {
   create() {
     super.create();
 
-    this.deleteKey = this.input.keyboard.addKey('delete');
+    this.backSpaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.BACKSPACE);
+    this.deleteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DELETE);
   }
 
   async deleteCurrentExercise() {
     if (!this.selectedExercise) {
-        console.error("No exercise selected for deletion.");
-        return;
+      console.error("No exercise selected for deletion.");
+      return;
     }
-
+  
     if (this.selectedExercise === "Default") {
-        alert("This exercise is a default exercise which cannot be deleted.");
-        return;
+      alert("This exercise is a default exercise which cannot be deleted.");
+      return;
     }
-
+  
     const confirmDelete = confirm(`Are you sure you want to delete the exercise '${this.selectedExercise}'?`);
     if (!confirmDelete) return;
-
+  
     try {
-        await deleteDocument("exercise", this.selectedExercise); 
-        console.log(`Exercise '${this.selectedExercise}' has been deleted.`);
-
-        alert(`Exercise '${this.selectedExercise}' deleted successfully.`);
-        this.scene.start("recorded-exercises"); 
+      // 1. Obriši glavni zapis iz "exercise"
+      await deleteDocument("exercise", this.selectedExercise);
+      console.log(`Exercise '${this.selectedExercise}' has been deleted from 'exercise' collection.`);
+  
+      // 2. Dohvati sve dokumente iz "user_exercises" gdje je exercise === this.selectedExercise
+      const userExercisesSnapshot = await getDocuments("user_exercises");
+      const toDelete = userExercisesSnapshot.docs.filter(doc => doc.data().exercise === this.selectedExercise);
+  
+      // 3. Obriši ih redom
+      for (const doc of toDelete) {
+        await deleteDocument("user_exercises", doc.id);
+        console.log(`Deleted user_exercise with id ${doc.id}`);
+      }
+  
+      alert(`Exercise '${this.selectedExercise}' and all related user records were deleted successfully.`);
+      this.scene.start("recorded-exercises");
     } catch (error) {
-        console.error("Error deleting exercise:", error);
-        alert("An error occurred while deleting the exercise.");
+      console.error("Error deleting exercise:", error);
+      alert("An error occurred while deleting the exercise.");
     }
-}
+  }
+  
 
 
   init(params) {
@@ -62,7 +75,7 @@ export default class SelectRecordedExerciseScene extends MenuScene {
       this.selectedExercise = this.items[this.activeItemIndex];
     }
 
-    if (this.adminMode && this.deleteKey.isDown) {
+    if (this.adminMode && (this.deleteKey.isDown || this.backSpaceKey.isDown)) {
       this.deleteCurrentExercise();
     }
   }

@@ -9,7 +9,8 @@ export default class SelectCategoryScene extends MenuScene {
   create() {
     super.create();
 
-    this.deleteKey = this.input.keyboard.addKey('d');
+    this.backSpaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.BACKSPACE);
+    this.deleteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DELETE);
   }
 
   init() {
@@ -45,7 +46,7 @@ export default class SelectCategoryScene extends MenuScene {
        });
 
     } catch (error) {
-      console.error("  Greška pri učitavanju levela:", error);
+      console.error("Error:", error);
       return [];
     }
   }

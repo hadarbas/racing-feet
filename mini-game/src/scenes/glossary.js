@@ -26,11 +26,13 @@ export default class GlossaryScene extends MenuScene {
             "⬇️ DOWN ARROW key - Move down through the Menu"
         ];
 
+        const spacing = this.getLineSpacing()
+
         controls.forEach((text, index) => {
-            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
+            this.content.add(this.add.text(100, startY + index * spacing, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
         });
 
-        startY += controls.length * 40 + 40;
+        startY += controls.length * spacing + spacing;
 
         this.content.add(this.add.text(100, startY, "Glossary - Line Colors", { fontSize: this.getFontSize(), fill: "#fff" }));
         startY += 50;
@@ -42,10 +44,10 @@ export default class GlossaryScene extends MenuScene {
         ];
 
         colors.forEach((text, index) => {
-            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
+            this.content.add(this.add.text(100, startY + index * spacing, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
         });
 
-        startY += colors.length * 40 + 40;
+        startY += colors.length * spacing + spacing;
 
         this.content.add(this.add.text(100, startY, "Glossary - Scoring System", { fontSize: this.getFontSize(), fill: "#fff" }));
         startY += 50;
@@ -59,10 +61,10 @@ export default class GlossaryScene extends MenuScene {
         ];
 
         scoring.forEach((text, index) => {
-            this.content.add(this.add.text(100, startY + index * 40, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
+            this.content.add(this.add.text(100, startY + index * spacing, text, { fontSize: this.getFontSize(), fill: "#ddd" }));
         });
 
-        startY += scoring.length * 40 + 40;
+        startY += scoring.length * spacing + spacing;
 
         this.content.add(this.add.text(100, startY, "Press ESC to return", { fontSize: this.getFontSize(), fill: "#ff0" }));
 
@@ -91,6 +93,13 @@ export default class GlossaryScene extends MenuScene {
 
         this.resizeText();
     }
+
+    getLineSpacing() {
+        const baseSpacing = 40;
+        const scaleFactor = this.scale.height / 1080; 
+        return Math.max(baseSpacing, baseSpacing * scaleFactor);
+    }
+    
 
     getFontSize() {
         const baseFontSize = 30;

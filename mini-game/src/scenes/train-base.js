@@ -175,6 +175,11 @@ export default class TrainExerciseScene extends SteppedScene {
       this.currentStep = 'play';
       this.currentTime = 0;
     }
+
+    /*setTimeout(() => {
+      this.currentStep = 'play';
+    }, 1000);*/
+
     if (red >= 1) {
       this.currentStep = 'over_release_2';
     }
@@ -191,12 +196,14 @@ handleStep_play({ time, green, red, blue }) {
         + this.distanceBonus
         + this.levelDifficultyPoints;
       if (cornerScore > 100) cornerScore = 100;
+      if (cornerScore < 0) cornerScore = 0;
 
       this.scorePerCorner.push(cornerScore);
       this.lastCornerScore = Math.round(cornerScore);
       const totalScore = this.scorePerCorner.reduce((a, v) => a + v, 0);
       this.currentScore = Math.round(totalScore / this.scorePerCorner.length);
       if (this.currentScore > 100) this.currentScore = 100;
+      if (this.currentScore < 0) this.currentScore = 0;
 
       this.corner = false;
       this.cornerEnd = true;
@@ -304,12 +311,14 @@ handleStep_play({ time, green, red, blue }) {
       + this.distanceBonus
       + this.levelDifficultyPoints;
     if (cornerScore > 100) cornerScore = 100;
+    if (cornerScore < 0) cornerScore = 0;
 
     this.scorePerCorner.push(cornerScore);
     this.lastCornerScore = Math.round(cornerScore);
     const totalScore = this.scorePerCorner.reduce((a, v) => a + v, 0);
     this.currentScore = Math.round(totalScore / this.scorePerCorner.length);
     if (this.currentScore > 100) this.currentScore = 100;
+    if (this.currentScore < 0) this.currentScore = 0;
 
     this.corner = false;
     this.cornerEnd = true;
@@ -337,6 +346,9 @@ handleStep_play({ time, green, red, blue }) {
   } else {
     progressiveScore = this.currentScore;
   }
+
+  if (progressiveScore > 100) progressiveScore = 100
+  if (progressiveScore < 0) progressiveScore = 0
   this.currentScore = progressiveScore;
 
   const greenAlpha = (greenDist < 0.2 && greenData > -1 ? 1 - greenDist : 0.2);
@@ -346,6 +358,7 @@ handleStep_play({ time, green, red, blue }) {
   this.greenPlayer.setFillStyle(0x00ff00, greenAlpha);
   this.redPlayer  .setFillStyle(0xff0000, redAlpha);
   this.bluePlayer .setFillStyle(0x0000ff, blueAlpha);
+
 }
 
   getLastPointForKey(data, key) {

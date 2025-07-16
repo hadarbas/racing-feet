@@ -15,7 +15,8 @@ export default class SelectExerciseScene extends MenuScene {
 
   create() {
     super.create();
-    this.deleteKey = this.input.keyboard.addKey('delete');
+    this.backSpaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.BACKSPACE);
+    this.deleteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DELETE);
   }
 
   getStarRating(score) {
@@ -77,7 +78,7 @@ export default class SelectExerciseScene extends MenuScene {
   update() {
     super.update();
 
-    if (this.adminMode && this.deleteKey.isDown) {
+    if (this.adminMode && (this.deleteKey.isDown || this.backSpaceKey.isDown)) {
       this.deleteCurrentLevel(this.items[this.activeItemIndex]);
     }
   }
@@ -128,7 +129,7 @@ export default class SelectExerciseScene extends MenuScene {
       });
 
     } catch (error) {
-      console.error("Greška pri učitavanju levela:", error);
+      console.error("Error:", error);
       return [];
     }
   }
@@ -137,18 +138,18 @@ export default class SelectExerciseScene extends MenuScene {
     try {
       name = name.split(" - ")[0];
 
-      console.log(`🔍 Dohvatam level '${name}'...`);
+      console.log(`Fetching level '${name}'...`);
 
       const levelDoc = await getDocument("levels", name);
 
       if (!levelDoc.exists()) {
-        console.error(`  Level '${name}' ne postoji!`);
-        alert(`  Level '${name}' nije pronađen.`);
+        console.error(`  Level '${name}' not found!`);
+        alert(`  Level '${name}' not found.`);
         return;
       }
 
       const levelData = levelDoc.data();
-      console.log(`  Level '${name}' pronađen:`, levelData);
+      console.log(`  Level '${name}' found:`, levelData);
 
       const userName = localStorage.getItem("name");
       if (!userName) {
@@ -173,7 +174,7 @@ export default class SelectExerciseScene extends MenuScene {
       this.scene.start('LevelDetailsScene', { levelData: levelData});
 
     } catch (error) {
-      console.error("  Greška pri dohvaćanju levela:", error);
+      console.error("Error:", error);
       alert("Check console for error.");
     }
   }

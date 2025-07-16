@@ -53,19 +53,21 @@ export default class UsersResultsScene extends MenuScene {
 
     this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.userInput.node.addEventListener("input", (e) => {
+    this.userInput.node.addEventListener("keyup", (e) => {
       this.userFilter = e.target.value.toLowerCase();
       this.filterAndDisplayResults();
     });
+    
 
-    this.levelInput.node.addEventListener("input", (e) => {
+    this.levelInput.node.addEventListener("keyup", (e) => {
       this.levelFilter = e.target.value.toLowerCase();
       this.filterAndDisplayResults();
     });
+    
 
     this.results = await this.getUsersResults();
     this.filterAndDisplayResults();
-    this.createPaginationButtons();
+    //this.createPaginationButtons();
 
     this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
       this.cameras.main.scrollY += deltaY * 0.5;
@@ -130,6 +132,8 @@ export default class UsersResultsScene extends MenuScene {
     const userSearch = this.userFilter;
     const levelSearch = this.levelFilter;
 
+
+
     this.filteredResults = this.results.filter(({ user, resultName }) => {
       const matchUser = userSearch.length < 3 || user.toLowerCase().includes(userSearch);
       const matchResult = levelSearch.length < 3 || resultName.toLowerCase().includes(levelSearch);
@@ -147,26 +151,47 @@ export default class UsersResultsScene extends MenuScene {
     this.resultTexts = [];
 
     const centerX = this.cameras.main.width / 2;
-    let yOffset = 160;
+    let yOffset = 150;
 
-    this.resultTexts.push(
-      this.add.text(centerX - 200, yOffset, "User", { fontSize: "18px", fill: "#ff0" }).setOrigin(0.5),
-      this.add.text(centerX, yOffset, "Level / Exercise", { fontSize: "18px", fill: "#ff0" }).setOrigin(0.5),
-      this.add.text(centerX + 200, yOffset, "Score", { fontSize: "18px", fill: "#ff0" }).setOrigin(0.5)
-    );
+    const referenceWidth = 3840;
+    const referenceHeight = 2160;
+    const scaleFactor = Math.min(this.scale.width / referenceWidth, this.scale.height / referenceHeight);
 
-    yOffset += 30;
+    const columnSpacing = Math.min(1000, Math.round(500 * scaleFactor));
+    const columnWidth = Math.min(750, Math.round(350 * scaleFactor));
+    const baseFontSize = Math.max(14, Math.round(40 * scaleFactor));
+    const headerFontSize = Math.max(16, Math.round(50 * scaleFactor));
 
+    const baseTextStyle = {
+      fontSize: `${baseFontSize}px`,
+      fill: "#fff",
+      wordWrap: { width: columnWidth, useAdvancedWrap: true },
+      align: "center"
+    };
+
+    const headerStyle = {
+      fontSize: `${headerFontSize}px`,
+      fill: "#ff0",
+      wordWrap: { width: columnWidth, useAdvancedWrap: true },
+      align: "center"
+    };
+
+    const headerUser = this.add.text(centerX - columnSpacing, yOffset, "User", headerStyle).setOrigin(0.5);
+    const headerLevel = this.add.text(centerX, yOffset, "Level / Exercise", headerStyle).setOrigin(0.5);
+    const headerScore = this.add.text(centerX + columnSpacing, yOffset, "Score", headerStyle).setOrigin(0.5);
+    this.resultTexts.push(headerUser, headerLevel, headerScore);
+
+    const maxHeaderHeight = Math.max(headerUser.height, headerLevel.height, headerScore.height);
+    yOffset += maxHeaderHeight + 20;
+
+    // Grupisanje rezultata po useru
     const groupedResults = {};
     this.filteredResults.forEach(item => {
-      if (!groupedResults[item.user]) {
-        groupedResults[item.user] = [];
-      }
+      if (!groupedResults[item.user]) groupedResults[item.user] = [];
       groupedResults[item.user].push(item);
     });
 
     const sortedUsers = Object.keys(groupedResults).sort((a, b) => a.localeCompare(b));
-
     let orderedResults = [];
     sortedUsers.forEach(user => {
       const levels = groupedResults[user]
@@ -178,60 +203,100 @@ export default class UsersResultsScene extends MenuScene {
       orderedResults = orderedResults.concat(levels, exercises);
     });
 
+    // Paginacija
     const startIdx = this.currentPage * this.resultsPerPage;
     const paginatedResults = orderedResults.slice(startIdx, startIdx + this.resultsPerPage);
 
     paginatedResults.forEach(({ user, resultType, resultName, score }) => {
-      let levelText = "";
-      if (resultType === "level") {
-        levelText = `${resultName} - level`;
-      } else if (resultType === "exercise") {
-        levelText = `${resultName} - exercise`;
-      }
+      const levelText = resultType === "level"
+        ? `${resultName} - level`
+        : `${resultName} - exercise`;
 
-      this.resultTexts.push(
-        this.add.text(centerX - 200, yOffset, user, { fontSize: "16px", fill: "#fff" }).setOrigin(0.5),
-        this.add.text(centerX, yOffset, levelText, { fontSize: "16px", fill: "#fff" }).setOrigin(0.5),
-        this.add.text(centerX + 200, yOffset, score.toString(), { fontSize: "16px", fill: "#fff" }).setOrigin(0.5)
-      );
-      yOffset += 25;
+      const userText = this.add.text(centerX - columnSpacing, yOffset, user, baseTextStyle).setOrigin(0.5, 0);
+      const levelTextObj = this.add.text(centerX, yOffset, levelText, baseTextStyle).setOrigin(0.5, 0);
+      const scoreText = this.add.text(centerX + columnSpacing, yOffset, score.toString(), baseTextStyle).setOrigin(0.5, 0);
+
+      this.resultTexts.push(userText, levelTextObj, scoreText);
+
+      const maxRowHeight = Math.max(userText.height, levelTextObj.height, scoreText.height);
+      yOffset += maxRowHeight + 15;
     });
 
-    const contentHeight = yOffset + 150;
-    const scrollHeight = Math.max(contentHeight, this.scale.height);
+    const paddingBelowContent = 200;
+    const contentHeight = yOffset;
+    const totalContentHeight = contentHeight + paddingBelowContent;
+    const scrollHeight = Math.max(totalContentHeight, this.scale.height);
+
     this.cameras.main.setBounds(0, 0, this.scale.width, scrollHeight);
-    this.maxScrollY = Math.max(0, contentHeight - this.scale.height);
+    this.maxScrollY = Math.max(0, scrollHeight - this.scale.height);
+
+    this.contentHeight = contentHeight;
+    this.totalContentHeight = totalContentHeight;
+    this.createPaginationButtons();
   }
 
   createPaginationButtons() {
-    const centerX = this.scale.width / 2;
-    const buttonY = this.scale.height >= 720 ? this.scale.height - 200 : this.scale.height;
+    console.log(this.cameras.main.width)
+    const centerX = this.cameras.main.width / 2;
 
-    this.prevButton = this.add.text(centerX - 100, buttonY, "Previous page", {
-      fontSize: "18px",
-      fill: "#ff0",
-    })
-      .setInteractive()
-      .setOrigin(0.5)
-      .on("pointerdown", () => this.changePage(-1));
+    const referenceWidth = 1920;
+    const referenceHeight = 1080;
+    const scaleFactor = Math.min(this.scale.width / referenceWidth, this.scale.height / referenceHeight);
 
-    this.nextButton = this.add.text(centerX + 100, buttonY, "Next page", {
-      fontSize: "18px",
-      fill: "#ff0",
-    })
-      .setInteractive()
-      .setOrigin(0.5)
-      .on("pointerdown", () => this.changePage(1));
+    const columnWidth = Math.round(450 * scaleFactor);
+    const headerFontSize = Math.max(15, Math.round(25 * scaleFactor));
 
-    this.pageText = this.add.text(centerX, buttonY, `${this.currentPage + 1}`, {
-      fontSize: "18px",
+    const headerStyle = {
+      fontSize: `${headerFontSize}px`,
       fill: "#ff0",
-    }).setOrigin(0.5);
+      wordWrap: { width: columnWidth, useAdvancedWrap: true },
+      align: "center"
+    };
 
-    this.escText = this.add.text(centerX - 100, buttonY + 25, "Press ESC to return", {
-      fontSize: "18px",
-      fill: "#ff0",
-    });
+    const spacing = Math.max(150, 150 * scaleFactor);
+
+    if (!this.prevButton || this.prevButton._destroyed || !this.prevButton.scene) {
+      this.prevButton = this.add.text(0, 0, "Previous page", headerStyle)
+        .setInteractive()
+        .setOrigin(0.5)
+        .on("pointerdown", () => this.changePage(-1));
+    }
+    
+    if (!this.nextButton || this.nextButton._destroyed || !this.nextButton.scene) {
+      this.nextButton = this.add.text(0, 0, "Next page", headerStyle)
+        .setInteractive()
+        .setOrigin(0.5)
+        .on("pointerdown", () => this.changePage(1));
+    }    
+
+    if (!this.pageText || this.pageText._destroyed || !this.pageText.scene) {
+      this.pageText = this.add.text(0, 0, `${this.currentPage + 1}`, headerStyle).setOrigin(0.5);
+    } else if (typeof this.pageText.setText === 'function') {
+      this.pageText.setText(`${this.currentPage + 1}`);
+    } else {
+      this.pageText = this.add.text(0, 0, `${this.currentPage + 1}`, headerStyle).setOrigin(0.5);
+    }
+    
+    
+
+    const pageWidth = this.pageText.width;
+
+    this.prevButton.setX(centerX - pageWidth / 2 - spacing);
+    this.pageText.setX(centerX);
+    this.nextButton.setX(centerX + pageWidth / 2 + spacing);
+
+    const paddingBelowContent = 50;
+    const contentHeight = this.contentHeight || 0;
+
+    const buttonsY = contentHeight + paddingBelowContent;
+
+    this.prevButton.setY(buttonsY);
+    this.pageText.setY(buttonsY);
+    this.nextButton.setY(buttonsY);
+
+    if (this.escText) this.escText.destroy();
+    this.escText = this.add.text(centerX, buttonsY + headerFontSize + 10, "Press ESC to return", headerStyle)
+      .setOrigin(0.5);
   }
 
   changePage(direction) {
