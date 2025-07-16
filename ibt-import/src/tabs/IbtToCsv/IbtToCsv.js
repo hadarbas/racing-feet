@@ -62,6 +62,25 @@ function IbtToCsv() {
             .filter(isRelevantColumn)
             .map(name => ({name, label: makeLabel(name)}))
         : []);*/
+
+        for(let i = 0; i<batch.length; i++){
+          batch[i].Throttle = 2*batch[i].Throttle - 1
+          if (batch[i].Throttle > 1) {
+            batch[i].Throttle = 1
+          }
+          if (batch[i].Throttle < -1) {
+            batch[i].Throttle = -1
+          }
+          if (batch[i].Brake > 1) {
+            batch[i].Brake = 1
+          }
+          if (batch[i].Brake < -1) {
+            batch[i].Brake = -1
+          } 
+
+          batch[i].Brake = 2*batch[i].Brake- 1
+          }
+          
       setSamples(samples => [...samples, ...batch]);
       console.debug("all keys", Object.keys(batch[0]));
     }, 0);

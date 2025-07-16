@@ -33,15 +33,12 @@ export default class SelectRecordedExerciseScene extends MenuScene {
     if (!confirmDelete) return;
   
     try {
-      // 1. Obriši glavni zapis iz "exercise"
       await deleteDocument("exercise", this.selectedExercise);
       console.log(`Exercise '${this.selectedExercise}' has been deleted from 'exercise' collection.`);
   
-      // 2. Dohvati sve dokumente iz "user_exercises" gdje je exercise === this.selectedExercise
       const userExercisesSnapshot = await getDocuments("user_exercises");
       const toDelete = userExercisesSnapshot.docs.filter(doc => doc.data().exercise === this.selectedExercise);
   
-      // 3. Obriši ih redom
       for (const doc of toDelete) {
         await deleteDocument("user_exercises", doc.id);
         console.log(`Deleted user_exercise with id ${doc.id}`);

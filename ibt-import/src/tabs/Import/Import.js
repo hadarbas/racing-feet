@@ -76,6 +76,11 @@ function Import() {
         Brake:       clamp(parseFloat(pt.Brake)),
         Throttle:    clamp(parseFloat(pt.Throttle)),
       }));
+
+        if (clamped[clamped.length - 1].SessionTime < 1) {
+          throw new Error("Exercise must be at least 1 second long.");
+        }
+      
       setSamples(clamped);
       setFileName(file.name);
 
@@ -153,8 +158,8 @@ function Import() {
         if (isRealCar) {
           return {
             time:  t,
-            red:   clamp(2 * pt.Brake    - 1),
-            green: clamp(2 * pt.Throttle - 1),
+            red:   clamp(pt.Brake),
+            green: clamp(pt.Throttle),
           };
         } else {
           return {

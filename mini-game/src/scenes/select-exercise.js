@@ -33,7 +33,8 @@ export default class SelectExerciseScene extends MenuScene {
       return;
     }
 
-    level = level.split(" - ")[0];
+    const lastDashIndex = level.lastIndexOf(" - ");
+    level = lastDashIndex !== -1 ? level.substring(0, lastDashIndex) : level;
 
     const confirmDelete = confirm(`Are you sure you want to delete the level '${level}'?`);
     if (!confirmDelete) return;
@@ -136,7 +137,9 @@ export default class SelectExerciseScene extends MenuScene {
 
   async handleItemClick(name) {
     try {
-      name = name.split(" - ")[0];
+      const lastDashIndex = name.lastIndexOf(" - ");
+      name = lastDashIndex !== -1 ? name.substring(0, lastDashIndex) : name;
+
 
       console.log(`Fetching level '${name}'...`);
 

@@ -3,7 +3,7 @@ import Papa from 'papaparse';
 export const importIRacerCSV = (file, callback) => {
   const reader = new FileReader();
 
-  const clamp = v => Math.max(-1, Math.min(1, v));
+  const clamp = v => 2 * (Math.max(-1, Math.min(1, v))) - 1;
 
   reader.onload = (event) => {
     const csvData = event.target.result;
@@ -21,12 +21,14 @@ export const importIRacerCSV = (file, callback) => {
           complete: (result) => {
             const mappedData = result.data.map((row, index) => {
               // const rawSteering = parseFloat(row["Steeringangle"]?.trim()) || 0;
-              const rawBrake    = (parseFloat(row["F brake pressure"]?.trim()) || 0) / 5;
+              const percent = parseFloat(row["Brake bias"]?.trim().replace("%", "")) || 0;
+              const rawBrake = Math.max(-1, Math.min(1, (percent / 100) * 2 - 1));
+
               const rawThrottle = (parseFloat(row["F88 PPSA"]?.trim()) || 0) / 100;
 
               return {
                 // SteeringWheelAngle: clamp(rawSteering), // volan više ne čitamo
-                Brake:    clamp(rawBrake),
+                Brake:    rawBrake,
                 Throttle: clamp(rawThrottle),
                 SessionTime: parseFloat((index * (16.66 / 1000)).toFixed(6)),
               };
